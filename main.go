@@ -11,15 +11,41 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-// TransformedDevice represents a device with its properties
-type TransformedDevice struct {
+// Tank represents a tank with its properties
+type Tank struct {
 	ID            string         `json:"id" bson:"_id"`
 	Name          string         `json:"name" bson:"name"`
-	Modified      time.Time      `json:"modified" bson:"modified"`
-	Created       time.Time      `json:"created" bson:"created"`
+	Sensors       []SensorData   `json:"sensors"`
+	Pumps         []PumpData     `json:"actuators"`
 	Notifications []Notification `json:"notifications" bson:"notifications"`
 	Location      Location       `json:"location" bson:"location"`
 	Geometry      Geometry       `json:"geometry" bson:"geometry"`
+	Modified      time.Time      `json:"modified" bson:"modified"`
+	Created       time.Time      `json:"created" bson:"created"`
+}
+
+//Majiup sensor structure
+type SensorData struct {
+	ID   string `json:"id" bson:"id"`
+	Name string `json:"name" bson:"name"`
+
+	Modified time.Time   `json:"modified" bson:"modified"`
+	Created  time.Time   `json:"created" bson:"created"`
+	Time     *time.Time  `json:"time" bson:"time"`
+	Meta     Meta        `json:"meta" bson:"meta"`
+	Value    interface{} `json:"value" bson:"value"`
+}
+
+//Majiup actuator structure
+type PumpData struct {
+	ID   string `json:"id" bson:"id"`
+	Name string `json:"name" bson:"name"`
+
+	Modified time.Time `json:"modified" bson:"modified"`
+	Created  time.Time `json:"created" bson:"created"`
+
+	Time  *time.Time  `json:"time" bson:"time"`
+	Value interface{} `json:"value" bson:"value"`
 }
 
 // Notification represents a notification with its properties
@@ -41,6 +67,19 @@ type Geometry struct {
 	Radius   float64 `json:"radius" bson:"radius"`
 	Capacity float64 `json:"capacity" bson:"capacity"`
 	Type     string  `json:"type,omitempty" bson:"type"`
+}
+
+type Meta struct {
+	Kind     string `json:"kind" bson:"kind"`
+	Quantity string `json:"quantity" bson:"quantity"`
+	Unit     string `json:"unit" bson:"unit"`
+	// Add additional fields as per your JSON structure
+}
+
+type ValueData struct {
+	Timestamp time.Time              `json:"timestamp"`
+	Value     int                    `json:"value,omitempty"`
+	Meta      map[string]interface{} `json:"meta,omitempty"`
 }
 
 // validate checks if the geometry values are valid
@@ -67,246 +106,56 @@ func main() {
 
 	router := httprouter.New()
 
-	router.GET("/devices", DeviceProxyHandler)
+	/*----------------------------------------------------------------------------------------*/
 
-	// Endpoint to get devices data
-	router.GET("/majiup-devices", DeviceHandler)
+	// Endpoint to get tanks under majiup
+	router.GET("/tanks", TankHandler)
 
 	// Return devices using a specific ID
-	router.GET("/majiup-devices/:deviceID", GetDeviceByIDHandler)
+	router.GET("/tanks/:tankID", GetTankByIDHandler)
 
-	router.GET("/notifications", ListNotificationsHandler)
-	router.GET("/majiup-devices/:deviceID/notifications", ListDeviceNotificationsHandler)
-	router.POST("/majiup-devices/:deviceID/notification", CreateNotificationHandler)
+	// Endpoint to get all sensors for a specific tank
+	router.GET("/tanks/:tankID/tank-sensors", TankSensorHandler)
 
-	// Endpoint to get all notifications
-	// router.GET("/notifications", ListNotificationsHandler)
+	/*-----------------------------WATER LEVEL SENSOR--------------------------------*/
 
-	// Register the endpoints
+	// Endpoint to get the water level sensor data from a specific tank
+	router.GET("/tanks/:tankID/tank-sensors/waterlevel", WaterLevelSensorHandler)
 
-	// Endpoint to get notifications for a specific device
-	// router.GET("/majiup-devices/:deviceID/notifications", DeviceNotificationsHandler)
+	// Endpoint to get the water level value
+	router.GET("/tanks/:tankID/tank-sensors/waterlevel/value", GetWaterLevelValueHandler)
 
-	// Endpoint to delete a specific notification by ID
-	// router.DELETE("/notification/:notificationID", DeleteNotificationHandler)
+	// Endpoint to get the water level history values
+	router.GET("/tanks/:tankID/tank-sensors/waterlevel/values", GetWaterLevelHistoryHandler)
 
-	// -----------------------------------------------
+	/*-----------------------------WATER TEMPERATURE SENSOR---------------------------*/
 
-	// Endpoint to get all sensors for a specific device
-	router.GET("/majiup-devices/:deviceID/sensors", DeviceSensorsHandler)
+	// Endpoint to get the water temperature sensor data from a specific tank
+	router.GET("/tanks/:tankID/tank-sensors/water-temperature", WaterTemperatureSensorHandler)
 
-	// Endpoint to get a specific sensor for a device
-	router.GET("/majiup-devices/:deviceID/sensors/:sensor_id", DeviceSensorByIDHandler)
+	// Endpoint to get the water temperature value from a specific tank
+	router.GET("/tanks/:tankID/tank-sensors/water-temperature/value", GetWaterTemperatureValueHandler)
 
-	// Endpoint to create a new sensor for a device
-	router.POST("/majiup-devices/:deviceID/sensors", CreateSensorHandler)
+	// Endpoint to get the water temperature history values data from a specific tank
+	router.GET("/tanks/:tankID/tank-sensors/water-temperature/values", GetWaterTemperatureHistoryHandler)
 
-	// Endpoint to get the value of a specific sensor for a device
-	router.GET("/majiup-devices/:deviceID/sensors/:sensor_id/value", GetSensorValueHandler)
+	/*-----------------------------WATER QUALITY SENSOR---------------------------*/
 
-	// Endpoint to get all values of a specific sensor for a device
-	router.GET("/majiup-devices/:deviceID/sensors/:sensor_id/values", GetSensorValuesHandler)
+	// Endpoint to get the water quality sensor data from a specific tank
+	router.GET("/tanks/:tankID/tank-sensors/water-quality", WaterQualitySensorHandler)
 
-	// Endpoint to post a value to a specific sensor for a device
-	router.POST("/majiup-devices/:deviceID/sensors/:sensor_id/value", PostSensorValueHandler)
+	// Endpoint to get the water quality sensor data from a specific tank
+	router.GET("/tanks/:tankID/tank-sensors/water-quality/value", GetWaterQualityValueHandler)
 
-	// Endpoint to delete a specific sensor for a device
-	router.DELETE("/majiup-devices/:device_id/sensors/:sensor_id", DeleteSensorHandler)
-
-	// --------------------------------------------------
-
-	// Endpoint to get all actuators for a specific device
-	router.GET("/majiup-devices/:deviceID/actuators", DeviceActuatorsHandler)
-
-	// Endpoint to get a specific actuator for a device
-	router.GET("/majiup-devices/:deviceID/actuators/:actuator_id", DeviceActuatorByIDHandler)
-
-	// Endpoint to create a new actuator for a device
-	router.POST("/majiup-devices/:deviceID/actuators", CreateActuatorHandler)
-
-	// Endpoint to get the value of a specific actuator for a device
-	router.GET("/majiup-devices/:deviceID/actuators/:actuator_id/value", GetActuatorValueHandler)
-
-	// Endpoint to get all values of a specific actuator for a device
-	router.GET("/majiup-devices/:deviceID/actuators/:actuator_id/values", GetActuatorValuesHandler)
-
-	// Endpoint to post a value to a specific actuator for a device
-	router.POST("/majiup-devices/:deviceID/actuators/:actuator_id/value", PostActuatorValueHandler)
-
-	// Endpoint to delete a specific actuator for a device
-	router.DELETE("/devices/:device_id/actuators/:actuator_id", DeleteActuatorHandler)
+	// Endpoint to get the water quality history values from a specific tank
+	router.GET("/tanks/:tankID/tank-sensors/water-quality/values", GetWaterQualityHistoryHandler)
 
 	fmt.Println("Majiup server running at PORT 8080")
 	http.ListenAndServe(":8080", router)
 }
 
-// NotificationsHandler handles the GET request for /majiup-devices/notifications
-func NotificationsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// Read the notifications JSON file
-	notificationsData, err := ioutil.ReadFile("notifications.json")
-	if err != nil {
-		fmt.Println("Error reading notifications file:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Unmarshal the JSON data into a slice of Notification
-	var notifications []Notification
-	err = json.Unmarshal(notificationsData, &notifications)
-	if err != nil {
-		fmt.Println("Error unmarshaling notifications:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Marshal the notifications slice into JSON
-	response, err := json.Marshal(notifications)
-	if err != nil {
-		fmt.Println("Error marshaling notifications:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(response)
-}
-
-// ListDeviceNotificationsHandler handles requests to list notifications for a specific device
-func ListDeviceNotificationsHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	// Get the device ID from the URL parameter
-	deviceID := params.ByName("deviceID")
-
-	// Read the devices.json file
-	data, err := ioutil.ReadFile("devices.json")
-	if err != nil {
-		fmt.Println("Error reading devices.json:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Unmarshal the JSON data into a slice of Device
-	var devices []TransformedDevice
-	err = json.Unmarshal(data, &devices)
-	if err != nil {
-		fmt.Println("Error unmarshaling devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Find the device with the matching ID
-	var targetDevice *TransformedDevice
-	for i := range devices {
-		if devices[i].ID == deviceID {
-			targetDevice = &devices[i]
-			break
-		}
-	}
-
-	// If the device is not found, return an error
-	if targetDevice == nil {
-		fmt.Println("Device not found:", deviceID)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	// Marshal the device's notifications into JSON
-	response, err := json.Marshal(targetDevice.Notifications)
-	if err != nil {
-		fmt.Println("Error marshaling device notifications:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.WriteHeader(http.StatusOK)
-	w.Write(response)
-}
-
-// CreateNotificationHandler handles requests to create a new notification for a specific device
-func CreateNotificationHandler(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	// Get the device ID from the URL parameter
-	deviceID := params.ByName("deviceID")
-
-	// Read the request body
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("Error reading request body:", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Unmarshal the request body into a Notification struct
-	var newNotification Notification
-	err = json.Unmarshal(body, &newNotification)
-	if err != nil {
-		fmt.Println("Error unmarshaling request body:", err)
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	// Read the devices.json file
-	data, err := ioutil.ReadFile("devices.json")
-	if err != nil {
-		fmt.Println("Error reading devices.json:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Unmarshal the JSON data into a slice of Device
-	var devices []TransformedDevice
-	err = json.Unmarshal(data, &devices)
-	if err != nil {
-		fmt.Println("Error unmarshaling devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Find the device with the matching ID
-	var targetDevice *TransformedDevice
-	for i := range devices {
-		if devices[i].ID == deviceID {
-			targetDevice = &devices[i]
-			break
-		}
-	}
-
-	// If the device is not found, return an error
-	if targetDevice == nil {
-		fmt.Println("Device not found:", deviceID)
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	// Append the new notification to the device's notifications
-	targetDevice.Notifications = append(targetDevice.Notifications, newNotification)
-
-	// Marshal the updated devices slice into JSON
-	updatedData, err := json.Marshal(devices)
-	if err != nil {
-		fmt.Println("Error marshaling updated devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Write the updated data to the devices.json file
-	err = ioutil.WriteFile("devices.json", updatedData, 0644)
-	if err != nil {
-		fmt.Println("Error writing to devices.json:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusCreated)
-}
-
-// DeviceProxyHandler handles requests to the /device endpoint
-func DeviceProxyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+// DeviceHandler handles requests to the /tanks endpoint
+func TankHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
 	if err != nil {
@@ -324,62 +173,37 @@ func DeviceProxyHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Par
 		return
 	}
 
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(body)
-}
-
-// DeviceHandler handles requests to the /majiup-devices endpoint
-// DeviceHandler handles requests to the /majiup-devices endpoint
-func DeviceHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// Send a GET request to localhost/devices
-	resp, err := http.Get("http://localhost/devices")
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
 	if err != nil {
-		fmt.Println("Error requesting devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		fmt.Println("Error unmarshaling tanks:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Unmarshal the JSON data into a slice of TransformedDevice
-	var devices []TransformedDevice
-	err = json.Unmarshal(body, &devices)
-	if err != nil {
-		fmt.Println("Error unmarshaling devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	// Remove the first element from the tanks slice
+	if len(tanks) > 0 {
+		tanks = tanks[1:]
 	}
 
-	// Remove the first element from the devices slice
-	if len(devices) > 0 {
-		devices = devices[1:]
-	}
+	// Create a new slice to store the transformed tanks
+	transformedTanks := make([]Tank, len(tanks))
 
-	// Create a new slice to store the transformed devices
-	transformedDevices := make([]TransformedDevice, len(devices))
-
-	// Transform the devices by extracting the required fields
-	for i, device := range devices {
-		transformedDevices[i] = TransformedDevice{
-			ID:       device.ID,
-			Name:     device.Name,
-			Modified: device.Modified,
-			Created:  device.Created,
+	// Transform the tanks by extracting the required fields
+	for i, tank := range tanks {
+		transformedTanks[i] = Tank{
+			ID:       tank.ID,
+			Name:     tank.Name,
+			Sensors:  tank.Sensors,
+			Pumps:    tank.Pumps,
+			Modified: tank.Modified,
+			Created:  tank.Created,
 		}
 	}
 
 	// Marshal the transformed devices slice into JSON
-	response, err := json.Marshal(transformedDevices)
+	response, err := json.Marshal(transformedTanks)
 	if err != nil {
 		fmt.Println("Error marshaling devices:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -392,151 +216,18 @@ func DeviceHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 	// Write the JSON response to the response writer
 	w.Write(response)
 
-	err = ioutil.WriteFile("devices.json", body, 0644)
+	err = ioutil.WriteFile("tanks.json", body, 0644)
 	if err != nil {
-		fmt.Println("Error writing devices.json:", err)
+		fmt.Println("Error writing tanks.json:", err)
 	}
 }
 
-// GetDeviceByIDHandler handles requests to the /majiup-devices/:deviceID endpoint
-func GetDeviceByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
+// TankSensorsHandler handles requests to list all sensors for a specific tank
+func TankSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Read the devices.json file
-	data, err := ioutil.ReadFile("devices.json")
-	if err != nil {
-		fmt.Println("Error reading devices.json:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Unmarshal the JSON data into a slice of TransformedDevice
-	var devices []TransformedDevice
-	err = json.Unmarshal(data, &devices)
-	if err != nil {
-		fmt.Println("Error unmarshaling devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Find the device with the given device ID
-	var device TransformedDevice
-	for _, d := range devices {
-		if d.ID == deviceID {
-			device = d
-			break
-		}
-	}
-
-	// Marshal the device struct into JSON
-	response, err := json.Marshal(device)
-	if err != nil {
-		fmt.Println("Error marshaling device:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(response)
-}
-
-// ListNotificationsHandler handles requests to list all notifications
-func ListNotificationsHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	// Read the devices.json file
-	data, err := ioutil.ReadFile("devices.json")
-	if err != nil {
-		fmt.Println("Error reading devices.json:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Unmarshal the JSON data into a slice of TransformedDevice
-	var devices []TransformedDevice
-	err = json.Unmarshal(data, &devices)
-	if err != nil {
-		fmt.Println("Error unmarshaling devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Create a slice to store all notifications
-	var notifications []Notification
-
-	// Iterate over all devices and collect their notifications
-	for _, device := range devices {
-		notifications = append(notifications, device.Notifications...)
-	}
-
-	// Marshal the notifications slice into JSON
-	response, err := json.Marshal(notifications)
-	if err != nil {
-		fmt.Println("Error marshaling notifications:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(response)
-}
-
-// DeviceNotificationsHandler handles requests to list notifications for a specific device
-func DeviceNotificationsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	// Read the devices.json file
-	data, err := ioutil.ReadFile("devices.json")
-	if err != nil {
-		fmt.Println("Error reading devices.json:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Unmarshal the JSON data into a slice of TransformedDevice
-	var devices []TransformedDevice
-	err = json.Unmarshal(data, &devices)
-	if err != nil {
-		fmt.Println("Error unmarshaling devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Get the device ID from the URL parameter
-	deviceID := ps.ByName("deviceID")
-
-	// Find the device with the matching ID
-	var device TransformedDevice
-	for _, d := range devices {
-		if d.ID == deviceID {
-			device = d
-			break
-		}
-	}
-
-	// Marshal the device's notifications into JSON
-	response, err := json.Marshal(device.Notifications)
-	if err != nil {
-		fmt.Println("Error marshaling notifications:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(response)
-}
-
-// DeviceSensorsHandler handles requests to list all sensors for a specific device
-func DeviceSensorsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-
-	// Send a GET request to localhost/devices/deviceID/sensors
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", deviceID))
+	// Send a GET request to localhost/devices/tankID/sensors
+	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
 	if err != nil {
 		fmt.Println("Error requesting sensors:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -552,22 +243,83 @@ func DeviceSensorsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.
 		return
 	}
 
+	// Unmarshal the response body into a slice of SensorData
+	var sensors []SensorData
+	err = json.Unmarshal(body, &sensors)
+	if err != nil {
+		fmt.Println("Error unmarshaling sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Marshal the SensorData slice into JSON
+	responseBody, err := json.Marshal(sensors)
+	if err != nil {
+		fmt.Println("Error marshaling sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(body)
+	w.Write(responseBody)
 }
 
-// DeviceSensorByIDHandler handles requests to retrieve a specific sensor for a device
-func DeviceSensorByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	sensorID := ps.ByName("sensor_id")
+// GetTankByIDHandler handles requests to the /tanks/:tankID endpoint
+func GetTankByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Send a GET request to localhost/devices/deviceID/sensors/sensor_id
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s", deviceID, sensorID))
+	// Read the devices.json file
+	data, err := ioutil.ReadFile("devices.json")
 	if err != nil {
-		fmt.Println("Error requesting sensor:", err)
+		fmt.Println("Error reading devices.json:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(data, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the tank with the given tank ID
+	var tank Tank
+	for _, d := range tanks {
+		if d.ID == tankID {
+			tank = d
+			break
+		}
+	}
+
+	// Marshal the tank struct into JSON
+	response, err := json.Marshal(tank)
+	if err != nil {
+		fmt.Println("Error marshaling tank:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response to the response writer
+	w.Write(response)
+}
+
+// WaterLevelSensorHandler handles requests to retrieve water level sensors in a specific tank
+func WaterLevelSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -581,21 +333,51 @@ func DeviceSensorByIDHandler(w http.ResponseWriter, r *http.Request, ps httprout
 		return
 	}
 
+	// Unmarshal the JSON data into a slice of DeviceData
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Filter the sensors based on tankID and kind = "WaterLevel" in the meta field
+	var waterLevelSensors []SensorData
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			for _, sensor := range tank.Sensors {
+				if sensor.Meta.Kind == "WaterLevel" {
+					waterLevelSensors = append(waterLevelSensors, sensor)
+				}
+			}
+			break
+		}
+	}
+
+	// Marshal the water level sensors into JSON
+	response, err := json.Marshal(waterLevelSensors)
+	if err != nil {
+		fmt.Println("Error marshaling water level sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(body)
+	w.Write(response)
 }
 
-// CreateSensorHandler handles requests to create a new sensor for a device
-func CreateSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
+// GetWaterLevelHandler handles requests to retrieve the value of the water level sensor for a specific tank
+func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Send a POST request to localhost/devices/deviceID/sensors
-	resp, err := http.Post(fmt.Sprintf("http://localhost/devices/%s/sensors", deviceID), "application/json", r.Body)
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
 	if err != nil {
-		fmt.Println("Error creating sensor:", err)
+		fmt.Println("Error requesting devices:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -609,22 +391,122 @@ func CreateSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 		return
 	}
 
+	// Unmarshal the JSON data into a slice of DeviceData
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the water level sensor value for the specified tank ID
+	var waterLevelValue interface{}
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			for _, sensor := range tank.Sensors {
+				if sensor.Meta.Kind == "WaterLevel" {
+					waterLevelValue = sensor.Value
+					break
+				}
+			}
+			break
+		}
+	}
+
+	// Marshal the water level value into JSON
+	response, err := json.Marshal(waterLevelValue)
+	if err != nil {
+		fmt.Println("Error marshaling water level value:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(body)
+	w.Write(response)
 }
 
-// GetSensorValueHandler handles requests to retrieve the value of a specific sensor for a device
-func GetSensorValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	sensorID := ps.ByName("sensor_id")
+// GetWaterLevelHistoryHandler handles requests to retrieve water level values for a specific tank
+func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Send a GET request to localhost/devices/deviceID/sensors/sensor_id/value
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/value", deviceID, sensorID))
+	// Send a GET request to localhost/devices/tankID/sensors
+	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
 	if err != nil {
-		fmt.Println("Error retrieving sensor value:", err)
+		fmt.Println("Error retrieving sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	sensorBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading sensor response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the sensor data into a slice of SensorData
+	var sensors []SensorData
+	err = json.Unmarshal(sensorBody, &sensors)
+	if err != nil {
+		fmt.Println("Error unmarshaling sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the water level sensor based on the sensor kind in the meta field
+	var waterLevelSensor SensorData
+	for _, sensor := range sensors {
+		if sensor.Meta.Kind == "WaterLevel" {
+			waterLevelSensor = sensor
+			break
+		}
+	}
+
+	// Check if a water level sensor was found
+	if waterLevelSensor.ID == "" {
+		fmt.Println("Water level sensor not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Send a GET request to localhost/devices/tankID/sensors/waterlevel/values
+	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+	if err != nil {
+		fmt.Println("Error retrieving water level values:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	valuesBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading values response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response to the response writer
+	w.Write(valuesBody)
+}
+
+// WaterTemperatureSensorHandler handles requests to retrieve water temperature sensors in a specific tank
+func WaterTemperatureSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -638,22 +520,51 @@ func GetSensorValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 		return
 	}
 
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Filter the sensors based on tankID and kind = "WaterThermometer" in the meta field
+	var waterTemperatureSensors []SensorData
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			for _, sensor := range tank.Sensors {
+				if sensor.Meta.Kind == "WaterThermometer" {
+					waterTemperatureSensors = append(waterTemperatureSensors, sensor)
+				}
+			}
+			break
+		}
+	}
+
+	// Marshal the water temperature sensors into JSON
+	response, err := json.Marshal(waterTemperatureSensors)
+	if err != nil {
+		fmt.Println("Error marshaling water temperature sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(body)
+	w.Write(response)
 }
 
-// GetSensorValuesHandler handles requests to retrieve all values of a specific sensor for a device
-func GetSensorValuesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	sensorID := ps.ByName("sensor_id")
+// GetWaterTemperatureValueHandler handles requests to retrieve the value of the water temperature sensor for a specific tank
+func GetWaterTemperatureValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Send a GET request to localhost/devices/deviceID/sensors/sensor_id/values
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", deviceID, sensorID))
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
 	if err != nil {
-		fmt.Println("Error retrieving sensor values:", err)
+		fmt.Println("Error requesting devices:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -667,22 +578,122 @@ func GetSensorValuesHandler(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the water temperature sensor value for the specified tank ID
+	var waterTemperatureValue interface{}
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			for _, sensor := range tank.Sensors {
+				if sensor.Meta.Kind == "WaterThermometer" {
+					waterTemperatureValue = sensor.Value
+					break
+				}
+			}
+			break
+		}
+	}
+
+	// Marshal the water temperature value into JSON
+	response, err := json.Marshal(waterTemperatureValue)
+	if err != nil {
+		fmt.Println("Error marshaling water temperature value:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(body)
+	w.Write(response)
 }
 
-// PostSensorValueHandler handles requests to post a value to a specific sensor for a device
-func PostSensorValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	sensorID := ps.ByName("sensor_id")
+// GetWaterLevelHistoryHandler handles requests to retrieve water temperature values for a specific tank
+func GetWaterTemperatureHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Send a POST request to localhost/devices/deviceID/sensors/sensor_id/value
-	resp, err := http.Post(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/value", deviceID, sensorID), "application/json", r.Body)
+	// Send a GET request to localhost/devices/tankID/sensors
+	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
 	if err != nil {
-		fmt.Println("Error posting sensor value:", err)
+		fmt.Println("Error retrieving sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	sensorBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading sensor response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the sensor data into a slice of SensorData
+	var sensors []SensorData
+	err = json.Unmarshal(sensorBody, &sensors)
+	if err != nil {
+		fmt.Println("Error unmarshaling sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the water temperature sensor based on the sensor kind in the meta field
+	var waterTemperatureSensor SensorData
+	for _, sensor := range sensors {
+		if sensor.Meta.Kind == "WaterThermometer" {
+			waterTemperatureSensor = sensor
+			break
+		}
+	}
+
+	// Check if a water temperature sensor was found
+	if waterTemperatureSensor.ID == "" {
+		fmt.Println("Water temperature sensor not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Send a GET request to localhost/devices/tankID/sensors/watertemperature/values
+	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterTemperatureSensor.ID))
+	if err != nil {
+		fmt.Println("Error retrieving water temperature values:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	valuesBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading values response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response to the response writer
+	w.Write(valuesBody)
+}
+
+// WaterQualitySensorHandler handles requests to retrieve water quality sensors in a specific tank
+func WaterQualitySensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -696,39 +707,32 @@ func PostSensorValueHandler(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(body)
-}
-
-// DeleteSensorHandler handles requests to delete a specific sensor for a device
-func DeleteSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("device_id")
-	sensorID := ps.ByName("sensor_id")
-
-	// Send a DELETE request to localhost/devices/device_id/sensors/sensor_id
-	client := http.Client{}
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("http://localhost/devices/%s/sensors/%s", deviceID, sensorID), nil)
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
 	if err != nil {
-		fmt.Println("Error creating delete request:", err)
+		fmt.Println("Error unmarshaling tanks:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Execute the DELETE request
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error deleting sensor:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+	// Filter the sensors based on tankID and kind = "WaterPollutantSensor" in the meta field
+	var waterQualitySensors []SensorData
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			for _, sensor := range tank.Sensors {
+				if sensor.Meta.Kind == "WaterPollutantSensor" {
+					waterQualitySensors = append(waterQualitySensors, sensor)
+				}
+			}
+			break
+		}
 	}
-	defer resp.Body.Close()
 
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Error deleting sensor:", resp.Status)
+	// Marshal the water quality sensors into JSON
+	response, err := json.Marshal(waterQualitySensors)
+	if err != nil {
+		fmt.Println("Error marshaling water quality sensors:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -737,17 +741,17 @@ func DeleteSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write([]byte(`{"message": "Sensor deleted successfully"}`))
+	w.Write(response)
 }
 
-// DeviceActuatorsHandler handles requests to list all actuators for a specific device
-func DeviceActuatorsHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
+// GetWaterQualityValueHandler handles requests to retrieve the value of the water quality sensor for a specific tank
+func GetWaterQualityValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Send a GET request to localhost/devices/deviceID/actuators
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators", deviceID))
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
 	if err != nil {
-		fmt.Println("Error requesting actuators:", err)
+		fmt.Println("Error requesting devices:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -761,59 +765,174 @@ func DeviceActuatorsHandler(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the water quality sensor value for the specified tank ID
+	var waterQualityValue interface{}
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			for _, sensor := range tank.Sensors {
+				if sensor.Meta.Kind == "WaterPollutantSensor" {
+					waterQualityValue = sensor.Value
+					break
+				}
+			}
+			break
+		}
+	}
+
+	// Categorize the water quality based on the value ranges
+	var waterQuality string
+	if waterQualityValue != nil {
+		value, ok := waterQualityValue.(float64)
+		if !ok {
+			fmt.Println("Error converting water quality value to float64")
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		if value > 0 && value < 300 {
+			waterQuality = "Excellent"
+		} else if value >= 300 && value < 900 {
+			waterQuality = "Good"
+		} else if value >= 900 {
+			waterQuality = "Poor"
+		} else {
+			waterQuality = "Unknown"
+		}
+	} else {
+		waterQuality = "No data available"
+	}
+
+	// Create a map for the response
+	response := map[string]interface{}{
+		"waterQuality": waterQuality,
+		"tdsValue":     waterQualityValue,
+	}
+
+	// Marshal the response into JSON
+	responseBody, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(body)
+	w.Write(responseBody)
 }
 
-// DeviceActuatorByIDHandler handles requests to retrieve a specific actuator for a device
-func DeviceActuatorByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	actuatorID := ps.ByName("actuator_id")
+// GetWaterQualityHistoryHandler handles requests to retrieve water quality values for a specific tank
+func GetWaterQualityHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
 
-	// Send a GET request to localhost/devices/deviceID/actuators/actuator_id
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators/%s", deviceID, actuatorID))
+	// Send a GET request to localhost/devices/tankID/sensors
+	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
 	if err != nil {
-		fmt.Println("Error requesting actuator:", err)
+		fmt.Println("Error retrieving sensors:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
 
 	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	sensorBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		fmt.Println("Error reading sensor response body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(body)
-}
-
-// CreateActuatorHandler handles requests to create a new actuator for a device
-func CreateActuatorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-
-	// Send a POST request to localhost/devices/deviceID/actuators
-	resp, err := http.Post(fmt.Sprintf("http://localhost/devices/%s/actuators", deviceID), "application/json", r.Body)
+	// Unmarshal the sensor data into a slice of SensorData
+	var sensors []SensorData
+	err = json.Unmarshal(sensorBody, &sensors)
 	if err != nil {
-		fmt.Println("Error creating actuator:", err)
+		fmt.Println("Error unmarshaling sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the water quality sensor based on the sensor kind in the meta field
+	var waterQualitySensor SensorData
+	for _, sensor := range sensors {
+		if sensor.Meta.Kind == "WaterPollutantSensor" {
+			waterQualitySensor = sensor
+			break
+		}
+	}
+
+	// Check if a water quality sensor was found
+	if waterQualitySensor.ID == "" {
+		fmt.Println("Water quality sensor not found")
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Send a GET request to localhost/devices/tankID/sensors/waterquality/values
+	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterQualitySensor.ID))
+	if err != nil {
+		fmt.Println("Error retrieving water quality values:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	defer resp.Body.Close()
 
 	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
+	valuesBody, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error reading response body:", err)
+		fmt.Println("Error reading values response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the values data into a slice of ValueData
+	var values []ValueData
+	err = json.Unmarshal(valuesBody, &values)
+	if err != nil {
+		fmt.Println("Error unmarshaling values:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Categorize the water quality values based on the value ranges
+	var categorizedValues []map[string]interface{}
+	for _, value := range values {
+		waterQuality := ""
+		v := value.Value
+
+		if v > 0 && v < 300 {
+			waterQuality = "Excellent"
+		} else if v >= 300 && v < 900 {
+			waterQuality = "Good"
+		} else if v >= 900 {
+			waterQuality = "Poor"
+		} else {
+			waterQuality = "Unknown"
+		}
+
+		categorizedValue := map[string]interface{}{
+			"tdsValue":     value.Value,
+			"waterQuality": waterQuality,
+			"timestamp":    value.Timestamp,
+		}
+
+		categorizedValues = append(categorizedValues, categorizedValue)
+	}
+
+	// Marshal the categorized values into JSON
+	response, err := json.Marshal(categorizedValues)
+	if err != nil {
+		fmt.Println("Error marshaling categorized values:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -822,129 +941,5 @@ func CreateActuatorHandler(w http.ResponseWriter, r *http.Request, ps httprouter
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(body)
-}
-
-// GetActuatorValueHandler handles requests to retrieve the value of a specific actuator for a device
-func GetActuatorValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	actuatorID := ps.ByName("actuator_id")
-
-	// Send a GET request to localhost/devices/deviceID/actuators/actuator_id/value
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", deviceID, actuatorID))
-	if err != nil {
-		fmt.Println("Error retrieving actuator value:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(body)
-}
-
-// GetActuatorValuesHandler handles requests to retrieve all values of a specific actuator for a device
-func GetActuatorValuesHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	actuatorID := ps.ByName("actuator_id")
-
-	// Send a GET request to localhost/devices/deviceID/actuators/actuator_id/values
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators/%s/values", deviceID, actuatorID))
-	if err != nil {
-		fmt.Println("Error retrieving actuator values:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(body)
-}
-
-// PostActuatorValueHandler handles requests to post a value to a specific actuator for a device
-func PostActuatorValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("deviceID")
-	actuatorID := ps.ByName("actuator_id")
-
-	// Send a POST request to localhost/devices/deviceID/actuators/actuator_id/value
-	resp, err := http.Post(fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", deviceID, actuatorID), "application/json", r.Body)
-	if err != nil {
-		fmt.Println("Error posting actuator value:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write(body)
-}
-
-// DeleteActuatorHandler handles requests to delete a specific actuator for a device
-func DeleteActuatorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	deviceID := ps.ByName("device_id")
-	actuatorID := ps.ByName("actuator_id")
-
-	// Send a DELETE request to localhost/devices/device_id/actuators/actuator_id
-	client := http.Client{}
-	req, err := http.NewRequest("DELETE", fmt.Sprintf("http://localhost/devices/%s/actuators/%s", deviceID, actuatorID), nil)
-	if err != nil {
-		fmt.Println("Error creating delete request:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Execute the DELETE request
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error deleting actuator:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
-
-	// Check the response status code
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Error deleting actuator:", resp.Status)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
-
-	// Write the JSON response to the response writer
-	w.Write([]byte(`{"message": "Actuator deleted successfully"}`))
+	w.Write(response)
 }
