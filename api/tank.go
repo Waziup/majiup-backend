@@ -166,30 +166,43 @@ func TankHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func GetTankByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	tankID := ps.ByName("tankID")
 
-	// Read the devices.json file
-	data, err := ioutil.ReadFile("devices.json")
+	// Send a GET request to localhost/devices/tankID
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
 	if err != nil {
-		fmt.Println("Error reading devices.json:", err)
+		fmt.Println("Error creating request:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Unmarshal the JSON data into a slice of Tank
-	var tanks []Tank
-	err = json.Unmarshal(data, &tanks)
+	// Set the Content-Type and Accept headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	// Send the request
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error unmarshaling tanks:", err)
+		fmt.Println("Error sending request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// Find the tank with the given tank ID
+	// Unmarshal the JSON data into a Tank struct
 	var tank Tank
-	for _, d := range tanks {
-		if d.ID == tankID {
-			tank = d
-			break
-		}
+	err = json.Unmarshal(body, &tank)
+	if err != nil {
+		fmt.Println("Error unmarshaling tank:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
 
 	// Marshal the tank struct into JSON
