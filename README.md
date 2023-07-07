@@ -181,6 +181,46 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
  		curl
    		curl -X POST -H "Content-Type: application/json" -d '{"value": 1}' 	http://localhost:8080/tanks/201c85cdbda3/pumps/state
      
+ ### Tank meta ( Settings, Notifications, Location) API endpoints
+	-The meta is a field within the tank and can be update using the endpoint,
+ 	GET, POST = localhost/devices/<device-id>/meta
+	Meta Structure:
+		"meta": {
+		    "receivenotifications": false,
+		    "notifications": {
+		      "id": "",
+		      "message": "",
+		      "read_status": false
+		    },
+		    "location": {
+		      "longitude": 0,
+		      "latitude": 0
+		    },
+		    "settings": {
+		      "length": 0,
+		      "width": 0,
+		      "height": 0,
+		      "radius": 0,
+		      "capacity": 0,
+		      "maxalert": 0,
+		      "minalert": 0
+		    }
+		  },
+
+ 	1. POST = localhost:8080/tanks/:tankID/location => To post location cordincates
+  		- curl
+    		curl -X POST -H "Content-Type: application/json" -d '{"latitude": 9, "longitude": 32.438570}' http://localhost:8080/tanks/201c85cdbda3/location
+
+    ********** **To be completed (APIs)** *************
+    	localhost:8080/tanks/:tankID/location => To return the location cordinates
+	
+	GET = localhost:8080/tanks/:tankID/settings => To get the tank settings
+	POST = localhost:8080/tanks/:tankID/settings => To post tank settings
+	
+	GET = localhost:8080/tanks/notifications => To get all tank notifications
+	localhost:8080/tanks/:tankID/notifications => To get specific tank notifications
+	POST = localhost:8080/tanks/:tankID/notifications => To post a tank notification
+	DELETE = localhost:8080/tanks/:tankID/notification => To delete a tank notification
  
 
 
