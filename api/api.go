@@ -14,6 +14,16 @@ func ApiServe(r *httprouter.Router) {
 
 	/*--------------------------------TANK META ENDPOINTS-------------------------------*/
 
+	// r.GET("/tanks/:tankID/location", TankLocationHandler)
+	r.POST("/tanks/:tankID/location", TankLocationPostHandler)
+	// r.GET("/tanks/:tankID/settings", TankSettingsHandler)
+	// r.POST("/tanks/:tankID/settings", TankSettingsPostHandler)
+
+	// r.GET("/tanks/notifications", TanksNotifications)
+	// r.GET("/tanks/:tankID/notifications", TankIdNotificationsHandler)
+	// r.POST("/tanks/:tankID/notifications", TankNotificationsPostHandler)
+	// r.DELETE("/tanks/:tankID/notification", TankNotificationDeleteHandler)
+
 	/*-----------------------------WATER LEVEL SENSOR ENDPOINTS--------------------------------*/
 
 	// Endpoint to get the water level sensor data from a specific tank
