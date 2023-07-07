@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,9 +24,10 @@ type Tank struct {
 }
 
 type TankMeta struct {
-	Notifications []Notification `json:"notifications" bson:"notifications"`
-	Location      Location       `json:"location" bson:"location"`
-	Geometry      Geometry       `json:"geometry" bson:"geometry"`
+	ReceiveNotification bool         `json:"receivenotifications" bson:"receivenotifications"`
+	Notifications       Notification `json:"notifications" bson:"notifications"`
+	Location            Location     `json:"location" bson:"location"`
+	Settings            Settings     `json:"settings" bson:"settings"`
 }
 
 //Majiup sensor structure
@@ -65,13 +67,15 @@ type Location struct {
 	Latitude  float64 `json:"latitude" bson:"latitude"`
 }
 
-type Geometry struct {
+type Settings struct {
 	Length   float64 `json:"length" bson:"length"`
 	Width    float64 `json:"width" bson:"width"`
 	Height   float64 `json:"height" bson:"height"`
 	Radius   float64 `json:"radius" bson:"radius"`
 	Capacity float64 `json:"capacity" bson:"capacity"`
 	Type     string  `json:"type,omitempty" bson:"type"`
+	MaxAlert float64 `json:"maxalert" bson:"maxalert"`
+	MinAlert float64 `json:"minalert" bson:"minalert"`
 }
 
 type SensorMeta struct {
@@ -82,16 +86,16 @@ type PumpMeta struct {
 	Kind string `json:"kind" bson:"kind"`
 }
 
-// validate checks if the geometry values are valid
-func (g *Geometry) validate() error {
+// validate checks if the Settings values are valid
+func (g *Settings) validate() error {
 	// Example validation: Ensure non-negative values for length, width, and height
 	if g.Length < 0 || g.Width < 0 || g.Height < 0 {
-		return errors.New("geometry dimensions must be non-negative")
+		return errors.New("Settings dimensions must be non-negative")
 	}
 
 	// Example validation: Ensure non-negative value for capacity
 	if g.Capacity < 0 {
-		return errors.New("geometry capacity must be non-negative")
+		return errors.New("Settings capacity must be non-negative")
 	}
 
 	// Additional validation checks...
@@ -142,6 +146,7 @@ func TankHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 			Name:     tank.Name,
 			Sensors:  tank.Sensors,
 			Pumps:    tank.Pumps,
+			Meta:     tank.Meta,
 			Modified: tank.Modified,
 			Created:  tank.Created,
 		}
@@ -263,4 +268,237 @@ func TankSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 
 	// Write the JSON response to the response writer
 	w.Write(responseBody)
+}
+
+func TankLocationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Create a new HTTP client
+	client := http.Client{}
+
+	// Send a GET request to retrieve the tank data
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Accept header to specify JSON response
+	req.Header.Set("Accept", "application/json")
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error requesting tank:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a Tank struct
+	tank := Tank{
+		// ID:   tankID,
+		Meta: TankMeta{Location: Location{}},
+	}
+	err = json.Unmarshal(body, &tank)
+	if err != nil {
+		fmt.Println("Error unmarshaling tank:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Get the location data from the meta field
+	location := tank
+	fmt.Println(location)
+	// fmt.Println(string(body))
+
+	if err != nil {
+		fmt.Println("Error unmarshaling JSON:", err)
+		return
+	}
+
+	// Marshal the location data into JSON
+	response, err := json.Marshal(location)
+	if err != nil {
+		fmt.Println("Error marshaling location:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response to the response writer
+	w.Write(response)
+}
+
+// TankLocationHandler handles requests to retrieve or update the location data of a specific tank
+func TankLocationPostHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	if r.Method == http.MethodGet {
+		// GET request: Retrieve the location data
+
+		// Create a new HTTP client
+		client := http.Client{}
+
+		// Send a GET request to localhost/devices/tankID
+		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
+		if err != nil {
+			fmt.Println("Error creating request:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Set the Accept header to specify JSON response
+		req.Header.Set("Accept", "application/json")
+
+		// Send the request
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Error retrieving tank:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Read the response body
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading response body:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Print the response body for debugging
+		fmt.Println("Response Body:", string(body))
+
+		// Unmarshal the JSON data into a Tank struct
+		var tank Tank
+		err = json.Unmarshal(body, &tank)
+		if err != nil {
+			fmt.Println("Error unmarshaling tank:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Get the location data from the meta field
+		location := tank.Meta.Location
+
+		// Marshal the location data into JSON
+		response, err := json.Marshal(location)
+		if err != nil {
+			fmt.Println("Error marshaling location:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Set the Content-Type header to application/json
+		w.Header().Set("Content-Type", "application/json")
+
+		// Write the JSON response to the response writer
+		w.Write(response)
+	} else if r.Method == http.MethodPost {
+		// POST request: Update the location data
+
+		// Read the request body
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			fmt.Println("Error reading request body:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Unmarshal the JSON data into a map
+		var request map[string]interface{}
+		err = json.Unmarshal(body, &request)
+		if err != nil {
+			fmt.Println("Error unmarshaling request body:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Extract the latitude and longitude from the request body
+		latitude, ok := request["latitude"].(float64)
+		if !ok {
+			fmt.Println("Invalid latitude value")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		longitude, ok := request["longitude"].(float64)
+		if !ok {
+			fmt.Println("Invalid longitude value")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		// Create a new location object
+		location := Location{
+			Latitude:  latitude,
+			Longitude: longitude,
+		}
+
+		// Create a new tank object with the updated location
+		tank := Tank{
+			ID:   tankID,
+			Meta: TankMeta{Location: location},
+		}
+
+		// Marshal the tank object into JSON
+		tankData, err := json.Marshal(tank)
+		if err != nil {
+			fmt.Println("Error marshaling tank:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Create a new HTTP client
+		client := http.Client{}
+
+		// Send a POST request to localhost/devices/tankID
+		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/meta", tankID), bytes.NewBuffer(tankData))
+		if err != nil {
+			fmt.Println("Error creating request:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// Set the Content-Type header to specify JSON request body
+		req.Header.Set("Content-Type", "application/json")
+
+		// Send the request
+		resp, err := client.Do(req)
+		if err != nil {
+			fmt.Println("Error updating tank location:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		// Check the response status code
+		if resp.StatusCode != http.StatusOK {
+			fmt.Println("Error updating tank location:", resp.Status)
+			w.WriteHeader(resp.StatusCode)
+			return
+		}
+
+		// Set the Content-Type header to application/json
+		w.Header().Set("Content-Type", "application/json")
+
+		// Write the success response to the response writer
+		w.Write([]byte(`{"message": "Location updated successfully"}`))
+	} else {
+		// Invalid HTTP method
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
 }
