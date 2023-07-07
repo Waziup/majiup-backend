@@ -65,15 +65,7 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
       	- Returns the historical values stored in the water sensor
        	- The data returned here is helpful in ploting graphs
        	JSON RESPONSE =>
-	[
-	  {
-	    "value": 2.4,
-	    "time": "2023-07-07T12:18:07+03:00"
-	  },
-	  {
-	    "value": 2.3,
-	    "time": "2023-07-07T12:23:31+03:00"
-	  },
+	[	  
 	  {
 	    "value": 2.2,
 	    "time": "2023-07-07T12:23:34+03:00"
@@ -88,14 +80,58 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
 	  }
 	]
  	
-
+#### Water Temperature endpoints
+	- The JSON response for this API endpoint are similar to water level endpoint
  
+	1. localhost:8080/tanks/<tankID>/tank-sensors/water-temperature
 
-	// Endpoint to get the water level value
-	r.GET("/tanks/:tankID/tank-sensors/waterlevel/value", GetWaterLevelValueHandler)
+	2. localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/value
 
-	// Endpoint to get the water level history values
-	r.GET("/tanks/:tankID/tank-sensors/waterlevel/values", GetWaterLevelHistoryHandler)
+	3. localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/values
+ 
+#### Water quality endpoints
+	1. localhost:8080/tanks/<tankID>/tank-sensors/
+ 	```
+	[
+	  {
+	    "id": "201c85cdbda37",
+	    "name": "Water Quality Sensor",
+	    "modified": "2023-07-07T09:21:50.772Z",
+	    "created": "2023-07-07T09:19:55.884Z",
+	    "time": "2023-07-07T09:23:15.76Z",
+	    "meta": {
+	      "kind": "WaterPollutantSensor"
+	    },
+	    "value": 911
+	  }
+	]
+ 	```
+	2. localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/value
+ 	JSON RESPONSE =>
+  	{
+	  "tdsValue": 911,
+	  "waterQuality": "Poor"
+	}
+ 
+	3. localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/values
+ 	[
+	  {
+	    "tdsValue": 291,
+	    "timestamp": "0001-01-01T00:00:00Z",
+	    "waterQuality": "Excellent"
+	  },
+	  {
+	    "tdsValue": 431,
+	    "timestamp": "0001-01-01T00:00:00Z",
+	    "waterQuality": "Good"
+	  },
+	  {
+	    "tdsValue": 911,
+	    "timestamp": "0001-01-01T00:00:00Z",
+	    "waterQuality": "Poor"
+	  }
+	]
+
 
 ### Pump API endpoints
 
