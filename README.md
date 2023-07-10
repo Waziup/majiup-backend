@@ -112,7 +112,7 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
  		- Returns a list of sensor values collected by the sensor and their respective timestamps
  
 #### Water quality endpoints
-	1. GET = localhost:8080/tanks/<tankID>/tank-sensors/
+	1. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-quality
 		[
 		  {
 		    "id": "201c85cdbda37",
@@ -127,13 +127,13 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
 		  }
 		] 
  
-	2. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/value
+	2. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-quality/value
 	  	{
 		  "tdsValue": **911**,
 		  "waterQuality": "**Poor**"
 		}
 	 
-	3. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/values
+	3. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-quality/values
 	 	[
 		  {
 		    "tdsValue": 291,
