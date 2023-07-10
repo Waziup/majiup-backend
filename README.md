@@ -88,12 +88,28 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
  	
 #### Water Temperature endpoints
 	- The JSON response for this API endpoint are similar to water level endpoint
+ 	- Sensor kind is "WaterThermometer"	
  
 	1. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-temperature
+ 		[
+		  {
+		    "id": "5da97e3813474778618e2289",
+		    "name": "Water Temperature Sensor",
+		    "modified": "2023-07-07T09:13:59.554Z",
+		    "created": "2023-07-07T09:11:02.14Z",
+		    "time": "2023-07-07T09:23:42.008Z",
+		    "meta": {
+		      "kind": "WaterThermometer"
+		    },
+		    "value": 23.6
+		  }
+		]
 
 	2. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/value
+ 		- Returns  a singe value, 23.6
 
 	3. GET = localhost:8080/tanks/<tankID>/tank-sensors/water-temperature/values
+ 		- Returns a list of sensor values collected by the sensor and their respective timestamps
  
 #### Water quality endpoints
 	1. GET = localhost:8080/tanks/<tankID>/tank-sensors/
