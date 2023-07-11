@@ -12,6 +12,8 @@ func ApiServe(r *httprouter.Router) {
 	// Endpoint to get all sensors for a specific tank
 	r.GET("/tanks/:tankID/tank-sensors", TankSensorHandler)
 
+	r.GET("/tanks/:tankID/tank-info", GetSensorHistoryHandler)
+
 	/*--------------------------------TANK META ENDPOINTS-------------------------------*/
 
 	// r.GET("/tanks/:tankID/location", TankLocationHandler)
