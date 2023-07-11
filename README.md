@@ -41,8 +41,57 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
 	2. GET = localhost/tanks/<tankID>
  		Returns the specific tank with the given tank id
    
-    	3. GET = localhost/tanks/<tankID/tank-sensors
-     		Returns the sensors that are connected to the tank       	
+    3. GET = localhost/tanks/<tankID/tank-sensors
+     	Returns the sensors that are connected to the tank 
+
+	4. GET = localhost/tanks/<tankID>/tank-info
+		Returns the 3 sensor history data with there timestamps
+
+		{
+			"waterLevel": [				
+				{
+				"timestamp": "2023-07-07T09:23:42.008Z",
+				"value": 2.2
+				},
+				{
+				"timestamp": "2023-07-07T09:23:42.008Z",
+				"value": 2.1
+				},
+				{
+				"timestamp": "2023-07-07T09:23:42.008Z",
+				"value": 2
+				}
+			],
+			"waterTemperature": [				
+				{
+				"timestamp": "2023-07-07T09:24:42.625Z",
+				"value": 24.5
+				},
+				{
+				"timestamp": "2023-07-07T09:24:42.625Z",
+				"value": 23
+				},
+				{
+				"timestamp": "2023-07-07T09:24:42.625Z",
+				"value": 23.3
+				}
+			],
+			"waterQuality": [				
+				{
+				"timestamp": "2023-07-07T09:23:15.76Z",
+				"value": 291
+				},
+				{
+				"timestamp": "2023-07-07T09:23:15.76Z",
+				"value": 431
+				},
+				{
+				"timestamp": "2023-07-07T09:23:15.76Z",
+				"value": 911
+				}
+			]
+		}
+
 
 ### Sensors API endpoints
 #### Water Level endpoints
