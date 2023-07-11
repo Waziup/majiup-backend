@@ -502,3 +502,152 @@ func TankLocationPostHandler(w http.ResponseWriter, r *http.Request, ps httprout
 		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
+
+type SensorHistory struct {
+	WaterLevel       []ValueData `json:"waterLevel"`
+	WaterTemperature []ValueData `json:"waterTemperature"`
+	WaterQuality     []ValueData `json:"waterQuality"`
+}
+
+func GetSensorHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Send a GET request to localhost/devices/tankID/sensors
+	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
+	if err != nil {
+		fmt.Println("Error retrieving sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	sensorBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading sensor response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the sensor data into a slice of SensorData
+	var sensors []SensorData
+	err = json.Unmarshal(sensorBody, &sensors)
+	if err != nil {
+		fmt.Println("Error unmarshaling sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Prepare the sensor history struct
+	sensorHistory := SensorHistory{}
+
+	// Find and populate water level history
+	waterLevelHistory, err := getSensorHistory(tankID, "WaterLevel")
+	if err != nil {
+		fmt.Println("Error retrieving water level history:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	sensorHistory.WaterLevel = waterLevelHistory
+
+	// Find and populate water temperature history
+	waterTemperatureHistory, err := getSensorHistory(tankID, "WaterThermometer")
+	if err != nil {
+		fmt.Println("Error retrieving water temperature history:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	sensorHistory.WaterTemperature = waterTemperatureHistory
+
+	// Find and populate water quality history
+	waterQualityHistory, err := getSensorHistory(tankID, "WaterPollutantSensor")
+	if err != nil {
+		fmt.Println("Error retrieving water quality history:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	sensorHistory.WaterQuality = waterQualityHistory
+
+	// Marshal the sensor history into JSON
+	response, err := json.Marshal(sensorHistory)
+	if err != nil {
+		fmt.Println("Error marshaling sensor history:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the JSON response to the response writer
+	w.Write(response)
+}
+
+type WaterQualityValueData struct {
+	Value        float64   `json:"value"`
+	Timestamp    time.Time `json:"timestamp"`
+	WaterQuality string    `json:"waterQuality"`
+}
+
+func getSensorHistory(tankID, sensorKind string) ([]ValueData, error) {
+	// Send a GET request to localhost/devices/tankID/sensors
+	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	sensorBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal the sensor data into a slice of SensorData
+	var sensors []SensorData
+	err = json.Unmarshal(sensorBody, &sensors)
+	if err != nil {
+		return nil, err
+	}
+
+	// Find the sensor based on the sensor kind in the meta field
+	var targetSensor SensorData
+	for _, sensor := range sensors {
+		if sensor.Meta.Kind == sensorKind {
+			targetSensor = sensor
+			break
+		}
+	}
+
+	// Check if the target sensor was found
+	if targetSensor.ID == "" {
+		return nil, fmt.Errorf("%s sensor not found", sensorKind)
+	}
+
+	// Send a GET request to localhost/devices/tankID/sensors/sensorID/values
+	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, targetSensor.ID))
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	valuesBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Unmarshal the values data into a slice of ValueData
+	var values []ValueData
+	err = json.Unmarshal(valuesBody, &values)
+	if err != nil {
+		return nil, err
+	}
+
+	// Assign the correct timestamp to each value
+	for i := range values {
+		values[i].Timestamp = targetSensor.Time
+	}
+
+	return values, nil
+}
