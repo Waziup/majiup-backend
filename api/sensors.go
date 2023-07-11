@@ -11,8 +11,8 @@ import (
 )
 
 type ValueData struct {
-	Timestamp time.Time              `json:"timestamp"`
-	Value     int                    `json:"value,omitempty"`
+	Timestamp *time.Time             `json:"timestamp"`
+	Value     float64                `json:"value,omitempty"`
 	Meta      map[string]interface{} `json:"meta,omitempty"`
 }
 
