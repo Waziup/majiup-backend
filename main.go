@@ -14,6 +14,6 @@ func main() {
 
 	api.ApiServe(router)
 
-	fmt.Println("Majiup server running at PORT 8080")
-	http.ListenAndServe(":8080", router)
+	fmt.Println("Majiup server running at PORT 8081")
+	http.ListenAndServe(":8081", router)
 }
