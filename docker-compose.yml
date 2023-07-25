@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  backend:
+    image: backend
+    environment:
+      - TEST_VAR=1
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+    command: ["./majiup_backend"]
+    network_mode: "host"
+
+networks:
+  default:
+    external:
+      name: wazigate
