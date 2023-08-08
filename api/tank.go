@@ -24,10 +24,11 @@ type Tank struct {
 }
 
 type TankMeta struct {
-	ReceiveNotification bool         `json:"receivenotifications" bson:"receivenotifications"`
-	Notifications       Notification `json:"notifications" bson:"notifications"`
-	Location            Location     `json:"location" bson:"location"`
-	Settings            Settings     `json:"settings" bson:"settings"`
+	ReceiveNotification bool `json:"receivenotifications" bson:"receivenotifications"`
+	// Notifications       Notification `json:"notifications" bson:"notifications"`
+	Notifications Notification `json:"notifications" bson:"notifications"`
+	Location      Location     `json:"location" bson:"location"`
+	Settings      Settings     `json:"settings" bson:"settings"`
 }
 
 //Majiup sensor structure
@@ -103,7 +104,7 @@ func (g *Settings) validate() error {
 	return nil
 }
 
-// DeviceHandler handles requests to the /tanks endpoint
+// TankHandler handles requests to the /tanks endpoint
 func TankHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -650,4 +651,55 @@ func getSensorHistory(tankID, sensorKind string) ([]ValueData, error) {
 	}
 
 	return values, nil
+}
+
+func ChangeNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Read the new name from the request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading request body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Convert the plain text body to a string (new name)
+	newName := string(body)
+
+	// Prepare the payload with the new name
+	payload := map[string]string{
+		"name": newName,
+	}
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		fmt.Println("Error marshaling payload:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send a POST request to localhost/devices/tankID/name
+	resp, err := http.Post(fmt.Sprintf("http://localhost/devices/%s/name", tankID), "application/json", bytes.NewReader(payloadBytes))
+	if err != nil {
+		fmt.Println("Error sending POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Received non-OK response:", resp.Status)
+		// Print the response body for further analysis
+		responseBody, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println("Response body:", string(responseBody))
+		w.WriteHeader(resp.StatusCode)
+		return
+	}
+
+	// Set the Content-Type header to text/plain
+	w.Header().Set("Content-Type", "text/plain")
+
+	// Write a success response
+	w.Write([]byte("Tank name changed successfully"))
 }
