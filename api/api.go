@@ -20,7 +20,11 @@ func ApiServe(r *httprouter.Router) {
 	// Endpoint to get all sensors for a specific tank
 	r.GET("/tanks/:tankID/tank-sensors", handleCORS(TankSensorHandler))
 
+	// Endpoint to get sensor history
 	r.GET("/tanks/:tankID/tank-info", handleCORS(GetSensorHistoryHandler))
+
+	//Endpoint to change the name of a devices
+	r.POST("/tanks/:tankID/name", handleCORS(ChangeNameHandler))
 
 	/*--------------------------------TANK META ENDPOINTS-------------------------------*/
 
