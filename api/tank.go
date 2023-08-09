@@ -26,9 +26,9 @@ type Tank struct {
 type TankMeta struct {
 	ReceiveNotification bool `json:"receivenotifications" bson:"receivenotifications"`
 	// Notifications       Notification `json:"notifications" bson:"notifications"`
-	Notifications Notification `json:"notifications" bson:"notifications"`
-	Location      Location     `json:"location" bson:"location"`
-	Settings      Settings     `json:"settings" bson:"settings"`
+	Notifications []Notification `json:"notifications" bson:"notifications"`
+	Location      Location       `json:"location" bson:"location"`
+	Settings      Settings       `json:"settings" bson:"settings"`
 }
 
 //Majiup sensor structure
