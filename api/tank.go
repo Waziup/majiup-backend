@@ -26,9 +26,9 @@ type Tank struct {
 type TankMeta struct {
 	ReceiveNotification bool `json:"receivenotifications" bson:"receivenotifications"`
 	// Notifications       Notification `json:"notifications" bson:"notifications"`
-	Notifications []Notification `json:"notifications" bson:"notifications"`
-	Location      Location       `json:"location" bson:"location"`
-	Settings      Settings       `json:"settings" bson:"settings"`
+	Notifications Notification `json:"notifications" bson:"notifications"`
+	Location      Location     `json:"location" bson:"location"`
+	Settings      Settings     `json:"settings" bson:"settings"`
 }
 
 //Majiup sensor structure
@@ -56,11 +56,13 @@ type PumpData struct {
 	Value interface{} `json:"value" bson:"value"`
 }
 
-// Notification represents a notification with its properties
 type Notification struct {
-	ID         string `json:"id" bson:"id"`
-	Message    string `json:"message"`
-	ReadStatus bool   `json:"read_status"`
+	Messages []Message `json:"messages"`
+}
+
+type Message struct {
+	Timestamp string `json:"timestamp"`
+	Message   string `json:"message"`
 }
 
 type Location struct {
