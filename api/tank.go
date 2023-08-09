@@ -57,13 +57,13 @@ type PumpData struct {
 }
 
 type Notification struct {
-	Messages []Message `json:"messages"`
+	// Messages []Message `json:"messages"`
 }
 
-type Message struct {
-	Timestamp string `json:"timestamp"`
-	Message   string `json:"message"`
-}
+// type Message struct {
+// 	Timestamp string `json:"timestamp"`
+// 	Message   string `json:"message"`
+// }
 
 type Location struct {
 	Longitude float64 `json:"longitude" bson:"longitude"`
