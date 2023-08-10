@@ -272,20 +272,32 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
 		    }
 		  },
 
- 	1. POST = localhost:8080/tanks/:tankID/location => To post location cordincates
-  		- curl
-    		curl -X POST -H "Content-Type: application/json" -d '{"latitude": 9, "longitude": 32.438570}' http://localhost:8080/tanks/201c85cdbda3/location
+ 	- POST API 
+  		http://localhost:8081/tanks/:tankID/meta
 
-    ********** **To be completed (APIs)** *************
-    	localhost:8080/tanks/:tankID/location => To return the location cordinates
-	
-	GET = localhost:8080/tanks/:tankID/settings => To get the tank settings
-	POST = localhost:8080/tanks/:tankID/settings => To post tank settings
-	
-	GET = localhost:8080/tanks/notifications => To get all tank notifications
-	localhost:8080/tanks/:tankID/notifications => To get specific tank notifications
-	POST = localhost:8080/tanks/:tankID/notifications => To post a tank notification
-	DELETE = localhost:8080/tanks/:tankID/notification => To delete a tank notification
+      		body
+		{  			
+			"settings": {
+			    "length": 0,
+			    "width": 0,
+			    "height": 200,
+			    "radius": 1,
+			    "capacity": 2000,
+			    "maxalert": 0,
+			    "minalert": 0
+			},
+			"notifications":{		
+			    "Messages":[
+				{
+				    "message":"Notification Message",
+				    "read_status":false
+				}
+			    ]
+			}
+		}
+
+    		- CURL 
+      			curl -X POST "http://localhost/devices/TANK_ID/meta" -H "Content-Type: text/plain" -d '{ body }'
  
 
 
