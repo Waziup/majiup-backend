@@ -707,3 +707,150 @@ func ChangeNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	// Write a success response
 	w.Write([]byte("Tank name changed successfully"))
 }
+
+func postMetaField(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Read the request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading request body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send a POST request to localhost/devices/tankID/meta
+	client := http.DefaultClient
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/meta", tankID), bytes.NewReader(body))
+	if err != nil {
+		fmt.Println("Error creating POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to text/plain
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Received non-OK response:", resp.Status)
+		// Print the response body for further analysis
+		responseBody, _ := ioutil.ReadAll(resp.Body)
+		fmt.Println("Response body:", string(responseBody))
+		w.WriteHeader(resp.StatusCode)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write a success response
+	response := map[string]string{
+		"message": "Meta field updated successfully",
+	}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBytes)
+}
+
+func getMetaFields(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Create a new GET request
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Accept header
+	req.Header.Set("Accept", "application/json")
+
+	// Send the request
+	client := http.DefaultClient
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending GET request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Received non-OK response:", resp.Status)
+		w.WriteHeader(resp.StatusCode)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write the response body to the response writer
+	w.Write(body)
+}
+
+func DeleteTank(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	tankID := ps.ByName("tankID")
+
+	// Create a new DELETE request
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send the request
+	client := http.DefaultClient
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending DELETE request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Check the response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Received non-OK response:", resp.Status)
+		w.WriteHeader(resp.StatusCode)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write a success response
+	response := map[string]string{
+		"message": "Tank deleted successfully",
+	}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBytes)
+}

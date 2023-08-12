@@ -26,17 +26,16 @@ func ApiServe(r *httprouter.Router) {
 	//Endpoint to change the name of a devices
 	r.POST("/tanks/:tankID/name", handleCORS(ChangeNameHandler))
 
+	//Endpoint to delete a tank
+	r.DELETE("/tanks/:tankID", handleCORS(DeleteTank))
+
 	/*--------------------------------TANK META ENDPOINTS-------------------------------*/
 
-	// r.GET("/tanks/:tankID/location", TankLocationHandler)
-	r.POST("/tanks/:tankID/location", handleCORS(TankLocationPostHandler))
-	// r.GET("/tanks/:tankID/settings", TankSettingsHandler)
-	// r.POST("/tanks/:tankID/settings", TankSettingsPostHandler)
+	// GET Meta fields (settings & notifations)
+	r.GET("/tanks/:tankID/meta", handleCORS((getMetaFields)))
 
-	// r.GET("/tanks/notifications", TanksNotifications)
-	// r.GET("/tanks/:tankID/notifications", TankIdNotificationsHandler)
-	// r.POST("/tanks/:tankID/notifications", TankNotificationsPostHandler)
-	// r.DELETE("/tanks/:tankID/notification", TankNotificationDeleteHandler)
+	// POST Meta fields
+	r.POST("/tanks/:tankID/meta", handleCORS((postMetaField)))
 
 	/*-----------------------------WATER LEVEL SENSOR ENDPOINTS--------------------------------*/
 
