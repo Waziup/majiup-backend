@@ -661,29 +661,27 @@ func ChangeNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	tankID := ps.ByName("tankID")
 
 	// Read the new name from the request body
-	body, err := ioutil.ReadAll(r.Body)
+	newTankName, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		fmt.Println("Error reading request body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	// Convert the plain text body to a string (new name)
-	newName := string(body)
-
-	// Prepare the payload with the new name
-	payload := map[string]string{
-		"name": newName,
-	}
-	payloadBytes, err := json.Marshal(payload)
-	if err != nil {
-		fmt.Println("Error marshaling payload:", err)
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	// Send a POST request to localhost/devices/tankID/name
-	resp, err := http.Post(fmt.Sprintf("http://localhost/devices/%s/name", tankID), "application/json", bytes.NewReader(payloadBytes))
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/name", tankID), bytes.NewReader(newTankName))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to text/plain
+	req.Header.Set("Content-Type", "text/plain")
+
+	// Send the request
+	client := http.DefaultClient
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error sending POST request:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -694,18 +692,24 @@ func ChangeNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	// Check the response status code
 	if resp.StatusCode != http.StatusOK {
 		fmt.Println("Received non-OK response:", resp.Status)
-		// Print the response body for further analysis
-		responseBody, _ := ioutil.ReadAll(resp.Body)
-		fmt.Println("Response body:", string(responseBody))
 		w.WriteHeader(resp.StatusCode)
 		return
 	}
 
-	// Set the Content-Type header to text/plain
-	w.Header().Set("Content-Type", "text/plain")
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
 
 	// Write a success response
-	w.Write([]byte("Tank name changed successfully"))
+	response := map[string]string{
+		"message": "Tank name changed successfully",
+	}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBytes)
 }
 
 func postMetaField(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
