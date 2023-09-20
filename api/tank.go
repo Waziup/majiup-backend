@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
 // Tank represents a tank with its properties
@@ -109,7 +109,7 @@ func (g *Settings) validate() error {
 }
 
 // TankHandler handles requests to the /tanks endpoint
-func TankHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func TankHandler(w http.ResponseWriter, r *http.Request) {
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
 	if err != nil {
@@ -173,8 +173,11 @@ func TankHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 }
 
 // GetTankByIDHandler handles requests to the /tanks/:tankID endpoint
-func GetTankByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetTankByIDHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
@@ -231,8 +234,11 @@ func GetTankByIDHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Pa
 }
 
 // TankSensorsHandler handles requests to list all sensors for a specific tank
-func TankSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func TankSensorHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
@@ -275,8 +281,11 @@ func TankSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	w.Write(responseBody)
 }
 
-func TankLocationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func TankLocationHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Create a new HTTP client
 	client := http.Client{}
@@ -347,8 +356,11 @@ func TankLocationHandler(w http.ResponseWriter, r *http.Request, ps httprouter.P
 }
 
 // TankLocationHandler handles requests to retrieve or update the location data of a specific tank
-func TankLocationPostHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func TankLocationPostHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	if r.Method == http.MethodGet {
 		// GET request: Retrieve the location data
@@ -514,8 +526,11 @@ type SensorHistory struct {
 	WaterQuality     []ValueData `json:"waterQuality"`
 }
 
-func GetSensorHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetSensorHistoryHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
@@ -657,8 +672,10 @@ func getSensorHistory(tankID, sensorKind string) ([]ValueData, error) {
 	return values, nil
 }
 
-func ChangeNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func ChangeNameHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Read the new name from the request body
 	newTankName, err := ioutil.ReadAll(r.Body)
@@ -712,8 +729,11 @@ func ChangeNameHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 	w.Write(responseBytes)
 }
 
-func postMetaField(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func postMetaField(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Read the request body
 	body, err := ioutil.ReadAll(r.Body)
@@ -769,8 +789,11 @@ func postMetaField(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	w.Write(responseBytes)
 }
 
-func getMetaFields(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func getMetaFields(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Create a new GET request
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
@@ -815,8 +838,11 @@ func getMetaFields(w http.ResponseWriter, r *http.Request, ps httprouter.Params)
 	w.Write(body)
 }
 
-func DeleteTank(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func DeleteTank(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Create a new DELETE request
 	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)

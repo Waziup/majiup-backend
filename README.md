@@ -32,6 +32,18 @@ go run main.go
 ## Steps to run the Majiup Backend in docker
 -----  -----
 
+```
+sudo docker build --platform linux/arm64  -t majiup .
+```
+
+```
+sudo docker save -o majiup.tar majiup
+```
+
+```
+sudo chmod 777 frontend.tar
+```
+
 ## Available API endpoints
 The majiup-backend acts as a proxy api to http://localhost/devices which is wazigate api endpoint
 ### Tank API endpoints
@@ -43,11 +55,14 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
    
 	3. GET = localhost/tanks/<tankID/tank-sensors
 	     	Returns the sensors that are connected to the tank 
+	
+	4. GET = localhost/tanks/<tankID/pumps
+			Return the pumps connected to the tank
 
-	4. POST = localhost/tanks/tankID/name 
+	5. POST = localhost/tanks/tankID/name 
  		Used to modify the tank name. The name parameter is passed in the body.    
 
-	5. GET = localhost/tanks/<tankID>/tank-info
+	6. GET = localhost/tanks/<tankID>/tank-info
 		Returns the 3 sensor history data with there timestamps
 
 		{
@@ -95,7 +110,7 @@ The majiup-backend acts as a proxy api to http://localhost/devices which is wazi
 			]
 		}
 	
- 	6. DELETE = localhost/tanks/tankID
+ 	7. DELETE = localhost/tanks/tankID
   		- Used to DELETE an existing tank with the specified tankID
 
 ### Sensors API endpoints

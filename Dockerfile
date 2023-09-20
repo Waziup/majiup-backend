@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 
 # Build the Go application
-RUN go build -o majiup_backend .
+RUN go build -o majiup .
 
 
 # Stage 2: Create the final runtime image
@@ -24,8 +24,11 @@ FROM alpine:latest
 WORKDIR /app
 
 # Copy the binary from the previous stage
-COPY --from=build /app/majiup_backend ./
+COPY --from=build /app/majiup ./
+
+# Expose port 8080
+EXPOSE 8081
 
 # Set the entry point command
-CMD ["./majiup_backend"]
+CMD ["./majiup"]
 

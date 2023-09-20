@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
 type ValueData struct {
@@ -17,9 +17,10 @@ type ValueData struct {
 }
 
 // WaterLevelSensorHandler handles requests to retrieve water level sensors in a specific tank
-func WaterLevelSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func WaterLevelSensorHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
 
+	tankID := vars["tankID"]
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
 	if err != nil {
@@ -75,8 +76,10 @@ func WaterLevelSensorHandler(w http.ResponseWriter, r *http.Request, ps httprout
 }
 
 // GetWaterLevelHandler handles requests to retrieve the value of the water level sensor for a specific tank
-func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -134,8 +137,10 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request, ps httpro
 }
 
 // GetWaterLevelHistoryHandler handles requests to retrieve water level values for a specific tank
-func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
@@ -204,8 +209,10 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request, ps http
 }
 
 // WaterTemperatureSensorHandler handles requests to retrieve water temperature sensors in a specific tank
-func WaterTemperatureSensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func WaterTemperatureSensorHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -262,8 +269,10 @@ func WaterTemperatureSensorHandler(w http.ResponseWriter, r *http.Request, ps ht
 }
 
 // GetWaterTemperatureValueHandler handles requests to retrieve the value of the water temperature sensor for a specific tank
-func GetWaterTemperatureValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetWaterTemperatureValueHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -321,8 +330,10 @@ func GetWaterTemperatureValueHandler(w http.ResponseWriter, r *http.Request, ps 
 }
 
 // GetWaterLevelHistoryHandler handles requests to retrieve water temperature values for a specific tank
-func GetWaterTemperatureHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetWaterTemperatureHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
@@ -391,8 +402,10 @@ func GetWaterTemperatureHistoryHandler(w http.ResponseWriter, r *http.Request, p
 }
 
 // WaterQualitySensorHandler handles requests to retrieve water quality sensors in a specific tank
-func WaterQualitySensorHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func WaterQualitySensorHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -449,8 +462,10 @@ func WaterQualitySensorHandler(w http.ResponseWriter, r *http.Request, ps httpro
 }
 
 // GetWaterQualityValueHandler handles requests to retrieve the value of the water quality sensor for a specific tank
-func GetWaterQualityValueHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetWaterQualityValueHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -537,8 +552,10 @@ func GetWaterQualityValueHandler(w http.ResponseWriter, r *http.Request, ps http
 }
 
 // GetWaterQualityHistoryHandler handles requests to retrieve water quality values for a specific tank
-func GetWaterQualityHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func GetWaterQualityHistoryHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))

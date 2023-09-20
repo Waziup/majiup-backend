@@ -3,89 +3,89 @@ package api
 import (
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
-func ApiServe(r *httprouter.Router) {
-
+func ApiServe(r *mux.Router) {
 	// Enable CORS middleware for all endpoints
-	r.OPTIONS("/*path", handleOptions)
+	r.HandleFunc("/{path:.*}", handleOptions).Methods("OPTIONS")
 
 	// Endpoint to get tanks under majiup
-	r.GET("/tanks", handleCORS(TankHandler))
+	r.HandleFunc("/tanks", handleCORS(TankHandler)).Methods("GET")
 
 	// Return devices using a specific ID
-	r.GET("/tanks/:tankID", handleCORS(GetTankByIDHandler))
+	r.HandleFunc("/tanks/{tankID}", handleCORS(GetTankByIDHandler)).Methods("GET")
 
 	// Endpoint to get all sensors for a specific tank
-	r.GET("/tanks/:tankID/tank-sensors", handleCORS(TankSensorHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors", handleCORS(TankSensorHandler)).Methods("GET")
+
+	// Endpoint to get the pumps available in the tank
+	r.HandleFunc("/tanks/{tankID}/pumps", handleCORS(TankPumpHandler)).Methods("GET")
 
 	// Endpoint to get sensor history
-	r.GET("/tanks/:tankID/tank-info", handleCORS(GetSensorHistoryHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-info", handleCORS(GetSensorHistoryHandler)).Methods("GET")
 
-	//Endpoint to change the name of a devices
-	r.POST("/tanks/:tankID/name", handleCORS(ChangeNameHandler))
+	// Endpoint to change the name of a device
+	r.HandleFunc("/tanks/{tankID}/name", handleCORS(ChangeNameHandler)).Methods("POST")
 
-	//Endpoint to delete a tank
-	r.DELETE("/tanks/:tankID", handleCORS(DeleteTank))
+	// Endpoint to delete a tank
+	r.HandleFunc("/tanks/{tankID}", handleCORS(DeleteTank)).Methods("DELETE")
 
 	/*--------------------------------TANK META ENDPOINTS-------------------------------*/
 
-	// GET Meta fields (settings & notifations)
-	r.GET("/tanks/:tankID/meta", handleCORS((getMetaFields)))
+	// GET Meta fields (settings & notifications)
+	r.HandleFunc("/tanks/{tankID}/meta", handleCORS(getMetaFields)).Methods("GET")
 
 	// POST Meta fields
-	r.POST("/tanks/:tankID/meta", handleCORS((postMetaField)))
+	r.HandleFunc("/tanks/{tankID}/meta", handleCORS(postMetaField)).Methods("POST")
 
 	/*-----------------------------WATER LEVEL SENSOR ENDPOINTS--------------------------------*/
 
 	// Endpoint to get the water level sensor data from a specific tank
-	r.GET("/tanks/:tankID/tank-sensors/waterlevel", handleCORS(WaterLevelSensorHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/waterlevel", handleCORS(WaterLevelSensorHandler)).Methods("GET")
 
 	// Endpoint to get the water level value
-	r.GET("/tanks/:tankID/tank-sensors/waterlevel/value", handleCORS(GetWaterLevelValueHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/waterlevel/value", handleCORS(GetWaterLevelValueHandler)).Methods("GET")
 
 	// Endpoint to get the water level history values
-	r.GET("/tanks/:tankID/tank-sensors/waterlevel/values", handleCORS(GetWaterLevelHistoryHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/waterlevel/values", handleCORS(GetWaterLevelHistoryHandler)).Methods("GET")
 
 	/*-----------------------------WATER TEMPERATURE SENSOR ENDPOINTS---------------------------*/
 
 	// Endpoint to get the water temperature sensor data from a specific tank
-	r.GET("/tanks/:tankID/tank-sensors/water-temperature", handleCORS(WaterTemperatureSensorHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-temperature", handleCORS(WaterTemperatureSensorHandler)).Methods("GET")
 
 	// Endpoint to get the water temperature value from a specific tank
-	r.GET("/tanks/:tankID/tank-sensors/water-temperature/value", handleCORS(GetWaterTemperatureValueHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-temperature/value", handleCORS(GetWaterTemperatureValueHandler)).Methods("GET")
 
 	// Endpoint to get the water temperature history values data from a specific tank
-	r.GET("/tanks/:tankID/tank-sensors/water-temperature/values", handleCORS(GetWaterTemperatureHistoryHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-temperature/values", handleCORS(GetWaterTemperatureHistoryHandler)).Methods("GET")
 
 	/*-----------------------------WATER QUALITY SENSOR ENDPOINTS---------------------------*/
 
 	// Endpoint to get the water quality sensor data from a specific tank
-	r.GET("/tanks/:tankID/tank-sensors/water-quality", handleCORS(WaterQualitySensorHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality", handleCORS(WaterQualitySensorHandler)).Methods("GET")
 
 	// Endpoint to get the water quality sensor data from a specific tank
-	r.GET("/tanks/:tankID/tank-sensors/water-quality/value", handleCORS(GetWaterQualityValueHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality/value", handleCORS(GetWaterQualityValueHandler)).Methods("GET")
 
 	// Endpoint to get the water quality history values from a specific tank
-	r.GET("/tanks/:tankID/tank-sensors/water-quality/values", handleCORS(GetWaterQualityHistoryHandler))
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality/values", handleCORS(GetWaterQualityHistoryHandler)).Methods("GET")
 
 	/*---------------------------------PUMP ENDPOINTS-------------------------------------------*/
-	// Endpoint to get the pumps available in the tank (1)
-	r.GET("/tanks/:tankID/pumps", handleCORS(TankPumpHandler))
 
 	// Endpoint to get the pump state of the selected tankID
-	r.GET("/tanks/:tankID/pumps/state", handleCORS(TankStateHandler))
+	r.HandleFunc("/tanks/{tankID}/pumps/state", handleCORS(TankStateHandler)).Methods("GET")
 
 	// Endpoint to get the pump states of the selected tankID, the length of the array will give the actuation
-	r.GET("/tanks/:tankID/pumps/states", handleCORS(TankStateHistoryHandler))
+	r.HandleFunc("/tanks/{tankID}/pumps/states", handleCORS(TankStateHistoryHandler)).Methods("GET")
 
-	// Endpoint to get
-	r.POST("/tanks/:tankID/pumps/state", handleCORS(TankStatePostHandler))
+	// Endpoint to post pump state
+	r.HandleFunc("/tanks/{tankID}/pumps/state", handleCORS(TankStatePostHandler)).Methods("POST")
 }
 
 // handleOptions handles preflight OPTIONS requests
-func handleOptions(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func handleOptions(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 	w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -93,11 +93,11 @@ func handleOptions(w http.ResponseWriter, r *http.Request, _ httprouter.Params) 
 }
 
 // handleCORS wraps a handler function with CORS headers
-func handleCORS(h httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func handleCORS(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		h(w, r, ps)
+		h(w, r)
 	}
 }

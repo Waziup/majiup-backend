@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	"github.com/gorilla/mux"
 )
 
 // WaterQualitySensorHandler handles requests to retrieve water quality sensors in a specific tank
-func TankPumpHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func TankPumpHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -79,8 +81,11 @@ func TankPumpHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 }
 
 // TankStateHandler handles requests to retrieve the state of an actuator in a specific tank
-func TankStateHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func TankStateHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
 	resp, err := http.Get("http://localhost/devices")
@@ -154,8 +159,11 @@ func TankStateHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Para
 }
 
 // TankStateHistoryHandler handles requests to retrieve the history of sensor values stored in the actuator values for a specific tank
-func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators", tankID))
@@ -254,8 +262,11 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request, ps httprout
 }
 
 // TankStatePostHandler handles requests to update the state value of an actuator in a specific tank
-func TankStatePostHandler(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	tankID := ps.ByName("tankID")
+func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
+
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/actuators
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators", tankID))
