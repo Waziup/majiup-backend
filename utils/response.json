@@ -1,0 +1,63 @@
+[
+    {
+    "id": "6507e33368f3190956a07a04",
+    "name": "Kings House Rooftop",
+    "sensors": [
+    {
+    "id": "temperatureSensor_2",
+    "name": "Water Quality",
+    "modified": "2023-09-18T05:44:53.531Z",
+    "created": "2023-09-18T05:42:33.167Z",
+    "time": "2023-09-19T14:04:13.364Z",
+    "meta": {
+    "kind": "WaterPollutantSensor"
+    },
+    "value": 9.4
+    },
+    {
+    "id": "temperatureSensor_0",
+    "name": "Water Level",
+    "modified": "2023-09-18T05:45:30.001Z",
+    "created": "2023-09-18T05:42:33.184Z",
+    "time": "2023-09-19T15:27:57.969Z",
+    "meta": {
+    "kind": "WaterLevel"
+    },
+    "value": 529
+    },
+    {
+    "id": "temperatureSensor_1",
+    "name": "Water Temperature",
+    "modified": "2023-09-18T05:45:55.794Z",
+    "created": "2023-09-18T05:42:33.199Z",
+    "time": "2023-09-19T15:43:52.616Z",
+    "meta": {
+    "kind": "WaterThermometer"
+    },
+    "value": 26.5
+    }
+    ],
+    "actuators": [],
+    "meta": {
+    "receivenotifications": false,
+    "notifications": {
+    "messages": null
+    },
+    "location": {
+    "longitude": 0,
+    "latitude": 0
+    },
+    "settings": {
+    "length": 0,
+    "width": 0,
+    "height": 1650,
+    "radius": 0,
+    "capacity": 3000,
+    "maxalert": 3000,
+    "minalert": 12
+    }
+    },
+    "modified": "2023-09-20T06:15:51.989Z",
+    "created": "2023-09-18T05:42:11.382Z"
+    }
+    ]
