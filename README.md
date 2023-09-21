@@ -41,7 +41,7 @@ sudo docker save -o majiup.tar majiup
 ```
 
 ```
-sudo chmod 777 frontend.tar
+sudo chmod 777 majiup.tar
 ```
 
 ## Available API endpoints

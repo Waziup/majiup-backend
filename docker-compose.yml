@@ -2,14 +2,17 @@ version: "3.8"
 
 services:
 
-  backend:
-    image: backend
+  majiup:
+    build: .
+    image: majiup
     environment:
       - TEST_VAR=1
     ports:
       - "8081:8081"
+    volumes:
+      - ./serve:/app/serve
     restart: unless-stopped
-    command: ["./majiup_backend"]
+    command: ["./majiup"]
     network_mode: "host"
     
 networks:

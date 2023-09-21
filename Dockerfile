@@ -26,9 +26,11 @@ WORKDIR /app
 # Copy the binary from the previous stage
 COPY --from=build /app/majiup ./
 
+# Copy the React files from the 'serve' directory in the root directory
+COPY serve ./serve
+
 # Expose port 8080
 EXPOSE 8081
 
 # Set the entry point command
 CMD ["./majiup"]
-
