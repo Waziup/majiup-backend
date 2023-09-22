@@ -2,7 +2,7 @@ import unittest
 import requests
 import xmlrunner
 
-majiup_url = "http://localhost:8081/tanks"
+majiup_url = "http://localhost:8081/api/tanks"
 wazigate_url = "http://localhost/devices"
 
 headers = {

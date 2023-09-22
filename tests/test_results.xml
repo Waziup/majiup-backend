@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
-	<testsuite name="TestMajiupPump-20230920121217" tests="3" file=".py" time="13.037" timestamp="2023-09-20T12:12:30" failures="0" errors="0" skipped="0">
-		<testcase classname="TestMajiupPump" name="test_change_pump_state" time="12.513" timestamp="2023-09-20T12:12:30" file="tests.py" line="165"/>
-		<testcase classname="TestMajiupPump" name="test_get_pump_state" time="0.292" timestamp="2023-09-20T12:12:30" file="tests.py" line="155"/>
-		<testcase classname="TestMajiupPump" name="test_get_pump_state_states" time="0.231" timestamp="2023-09-20T12:12:30" file="tests.py" line="160"/>
+	<testsuite name="TestMajiupPump-20230922075637" tests="3" file=".py" time="6.708" timestamp="2023-09-22T07:56:43" failures="0" errors="0" skipped="0">
+		<testcase classname="TestMajiupPump" name="test_change_pump_state" time="6.480" timestamp="2023-09-22T07:56:43" file="tests.py" line="165"/>
+		<testcase classname="TestMajiupPump" name="test_get_pump_state" time="0.157" timestamp="2023-09-22T07:56:43" file="tests.py" line="155"/>
+		<testcase classname="TestMajiupPump" name="test_get_pump_state_states" time="0.071" timestamp="2023-09-22T07:56:43" file="tests.py" line="160"/>
 	</testsuite>
-	<testsuite name="TestMajiupSensors-20230920121217" tests="9" file=".py" time="1.040" timestamp="2023-09-20T12:12:31" failures="0" errors="0" skipped="0">
-		<testcase classname="TestMajiupSensors" name="test_get_water_level_data" time="0.177" timestamp="2023-09-20T12:12:30" file="tests.py" line="102"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_level_value" time="0.168" timestamp="2023-09-20T12:12:31" file="tests.py" line="107"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_level_values" time="0.245" timestamp="2023-09-20T12:12:31" file="tests.py" line="112"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_quality_data" time="0.118" timestamp="2023-09-20T12:12:31" file="tests.py" line="132"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_quality_value" time="0.069" timestamp="2023-09-20T12:12:31" file="tests.py" line="137"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_quality_values" time="0.037" timestamp="2023-09-20T12:12:31" file="tests.py" line="142"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_temp_data" time="0.117" timestamp="2023-09-20T12:12:31" file="tests.py" line="117"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_temp_value" time="0.054" timestamp="2023-09-20T12:12:31" file="tests.py" line="122"/>
-		<testcase classname="TestMajiupSensors" name="test_get_water_temp_values" time="0.056" timestamp="2023-09-20T12:12:31" file="tests.py" line="127"/>
+	<testsuite name="TestMajiupSensors-20230922075637" tests="9" file=".py" time="0.525" timestamp="2023-09-22T07:56:44" failures="0" errors="0" skipped="0">
+		<testcase classname="TestMajiupSensors" name="test_get_water_level_data" time="0.020" timestamp="2023-09-22T07:56:43" file="tests.py" line="102"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_level_value" time="0.019" timestamp="2023-09-22T07:56:43" file="tests.py" line="107"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_level_values" time="0.263" timestamp="2023-09-22T07:56:44" file="tests.py" line="112"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_quality_data" time="0.044" timestamp="2023-09-22T07:56:44" file="tests.py" line="132"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_quality_value" time="0.059" timestamp="2023-09-22T07:56:44" file="tests.py" line="137"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_quality_values" time="0.038" timestamp="2023-09-22T07:56:44" file="tests.py" line="142"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_temp_data" time="0.017" timestamp="2023-09-22T07:56:44" file="tests.py" line="117"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_temp_value" time="0.021" timestamp="2023-09-22T07:56:44" file="tests.py" line="122"/>
+		<testcase classname="TestMajiupSensors" name="test_get_water_temp_values" time="0.043" timestamp="2023-09-22T07:56:44" file="tests.py" line="127"/>
 	</testsuite>
-	<testsuite name="TestMajiupTankMetaData-20230920121217" tests="2" file=".py" time="0.217" timestamp="2023-09-20T12:12:31" failures="0" errors="0" skipped="0">
-		<testcase classname="TestMajiupTankMetaData" name="test_change_tank_meta_field" time="0.101" timestamp="2023-09-20T12:12:31" file="tests.py" line="72"/>
-		<testcase classname="TestMajiupTankMetaData" name="test_get_tank_meta_field" time="0.116" timestamp="2023-09-20T12:12:31" file="tests.py" line="68"/>
+	<testsuite name="TestMajiupTankMetaData-20230922075637" tests="2" file=".py" time="0.108" timestamp="2023-09-22T07:56:44" failures="0" errors="0" skipped="0">
+		<testcase classname="TestMajiupTankMetaData" name="test_change_tank_meta_field" time="0.059" timestamp="2023-09-22T07:56:44" file="tests.py" line="72"/>
+		<testcase classname="TestMajiupTankMetaData" name="test_get_tank_meta_field" time="0.049" timestamp="2023-09-22T07:56:44" file="tests.py" line="68"/>
 	</testsuite>
-	<testsuite name="TestMajiupTanks-20230920121217" tests="6" file=".py" time="0.706" timestamp="2023-09-20T12:12:32" failures="0" errors="0" skipped="0">
-		<testcase classname="TestMajiupTanks" name="test_change_tank_name" time="0.033" timestamp="2023-09-20T12:12:31" file="tests.py" line="51"/>
-		<testcase classname="TestMajiupTanks" name="test_get_pumps_in_tank" time="0.119" timestamp="2023-09-20T12:12:32" file="tests.py" line="41"/>
-		<testcase classname="TestMajiupTanks" name="test_get_sensor_history" time="0.318" timestamp="2023-09-20T12:12:32" file="tests.py" line="46"/>
-		<testcase classname="TestMajiupTanks" name="test_get_sensors_in_tank" time="0.106" timestamp="2023-09-20T12:12:32" file="tests.py" line="36"/>
-		<testcase classname="TestMajiupTanks" name="test_get_tank_id" time="0.041" timestamp="2023-09-20T12:12:32" file="tests.py" line="31"/>
-		<testcase classname="TestMajiupTanks" name="test_get_tanks" time="0.089" timestamp="2023-09-20T12:12:32" file="tests.py" line="26"/>
+	<testsuite name="TestMajiupTanks-20230922075637" tests="6" file=".py" time="0.239" timestamp="2023-09-22T07:56:44" failures="0" errors="0" skipped="0">
+		<testcase classname="TestMajiupTanks" name="test_change_tank_name" time="0.052" timestamp="2023-09-22T07:56:44" file="tests.py" line="51"/>
+		<testcase classname="TestMajiupTanks" name="test_get_pumps_in_tank" time="0.013" timestamp="2023-09-22T07:56:44" file="tests.py" line="41"/>
+		<testcase classname="TestMajiupTanks" name="test_get_sensor_history" time="0.128" timestamp="2023-09-22T07:56:44" file="tests.py" line="46"/>
+		<testcase classname="TestMajiupTanks" name="test_get_sensors_in_tank" time="0.013" timestamp="2023-09-22T07:56:44" file="tests.py" line="36"/>
+		<testcase classname="TestMajiupTanks" name="test_get_tank_id" time="0.018" timestamp="2023-09-22T07:56:44" file="tests.py" line="31"/>
+		<testcase classname="TestMajiupTanks" name="test_get_tanks" time="0.016" timestamp="2023-09-22T07:56:44" file="tests.py" line="26"/>
 	</testsuite>
 </testsuites>
