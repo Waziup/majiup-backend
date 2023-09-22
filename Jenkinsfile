@@ -32,6 +32,7 @@ pipeline {
         stage('Setup Frontend Production Files') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    
                     // Copy the dist folder to the main repository folder
                     sh 'cp -r majiup-waziapp/dist ../serve/'
                 }
@@ -55,6 +56,24 @@ pipeline {
                         sh 'docker-compose up -d'
                     }
                 }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+
+                    // Navigate to the tests folder and run tests
+                    dir('tests') {
+                        sh 'python tests.py'
+                    }
+                }
+            }
+        }
+
+        post {
+            always {
+                junit 'tests/test_results.xml'
             }
         }
     }
