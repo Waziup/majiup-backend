@@ -1,8 +1,11 @@
 pipeline {
+    
     agent any
+
     options {
         timeout(time: 1, unit: 'HOURS')
     }
+
     stages {
         stage('Checkout') {
             steps {
@@ -69,12 +72,12 @@ pipeline {
                     }
                 }
             }
-        }
+        }        
+    }
 
-        post {
-            always {
-                junit 'tests/test_results.xml'
-            }
+    post {
+        always {
+            junit 'tests/test_results.xml'
         }
     }
 }
