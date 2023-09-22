@@ -15,10 +15,55 @@ class TestMajiupTanks(unittest.TestCase):
 
     # The DELETE endpoint is not tested since the device is a real tank  (TO DO-Create a post API for Majiup)
     def setUp(self) -> None:
-        self.base_url = majiup_url
-        response = requests.get(f"{self.base_url}")
-        tanks = response.json()
-        self.tank_id = tanks[0]['id']
+        tank_setup_data = {
+            "name":"Testing Tank",
+            "meta":{
+                "settings": {
+                    "height": 1650,
+                    "capacity": 2000,
+                    "maxalert": 1900,
+                    "minalert": 100
+                }        
+            },
+            "sensors":[
+                {
+                    "name" :"Temperature Sensor",
+                    "value": 28,
+                    "meta": {
+                        "kind":"WaterThermometer"
+                    }
+                },
+                {
+                    "meta":{
+                        "kind": "WaterLevel"
+                    },
+                    "name":"WaterLevel",
+                    "value": 140
+                },
+                {
+                    "name": "Water Quality Sensor",
+                    "time": "2023-07-07T09:23:15.76Z",
+                    "meta": {
+                    "kind": "WaterPollutantSensor"
+                    },
+                    "value": 611
+                }
+            ],
+            "actuators":[
+                {
+                    "name":"Pump",
+                    "meta":{
+                        "kind":"Motor"
+                    },
+                    "value":0
+                }
+            ]
+        }
+        self.base_url = majiup_url     
+        res = requests.post(f"{wazigate_url}", json=tank_setup_data, headers=headers)
+        self.tank_id = res.json()
+        response2 = requests.get(f"{self.base_url}")
+        tanks = response2.json()        
         self.tank_name = tanks[0]['name']
         # print("Running tests for {} with id {}".format(self.tank_name, self.tank_id))
     
