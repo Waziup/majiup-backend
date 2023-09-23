@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -150,7 +151,6 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 	sensorValue := waterLevelValue.(float64)
 	calculatedValue := ((tankHeight - sensorValue) / tankHeight) * tankCapacity
 	liters := int(math.Round(calculatedValue))
-	fmt.Println(timestamp)
 
 	response := WaterLevel{
 		Level:     liters,
@@ -248,7 +248,6 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Unmarshal the values data into a slice of ValueData
 	var values []SensorData
 	err = json.Unmarshal(valuesBody, &values)
-	fmt.Println(values)
 
 	if err != nil {
 		fmt.Println("Error unmarshaling values:", err)
@@ -795,4 +794,331 @@ func GetWaterQualityHistoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Write the JSON response to the response writer
 	w.Write(response)
+}
+
+func ChangeWaterLevelAlerts(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	tankID := vars["tankID"]
+
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the tank with the specified ID
+	var targetTank Tank
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			targetTank = tank
+			break
+		}
+	}
+
+	if targetTank.ID == "" {
+		// Tank with the specified ID not found
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Find the water level sensor value for the specified tank
+	// sensorID := ""
+	var sensorID string
+	for _, sensor := range targetTank.Sensors {
+		if sensor.Meta.Kind == "WaterLevel" {
+			sensorID = sensor.ID
+			break
+		}
+	}
+
+	// Read the request body
+	metaBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading request body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send a POST request to localhost/devices/tankID/meta
+	client := http.DefaultClient
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/sensors/%s/meta", tankID, sensorID), bytes.NewReader(metaBody))
+	if err != nil {
+		fmt.Println("Error creating POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to text/plain
+	req.Header.Set("Content-Type", "application/json")
+
+	resp2, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp2.Body.Close()
+
+	// Check the response status code
+	if resp2.StatusCode != http.StatusOK {
+		fmt.Println("Received non-OK response:", resp2.Status)
+		// Print the response body for further analysis
+		responseBody, _ := ioutil.ReadAll(resp2.Body)
+		fmt.Println("Response body:", string(responseBody))
+		w.WriteHeader(resp2.StatusCode)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write a success response
+	response := map[string]string{
+		"message": "Meta field updated successfully",
+	}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBytes)
+}
+
+func ChangeWaterTemperatureAlerts(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	tankID := vars["tankID"]
+
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the tank with the specified ID
+	var targetTank Tank
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			targetTank = tank
+			break
+		}
+	}
+
+	if targetTank.ID == "" {
+		// Tank with the specified ID not found
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Find the water level sensor value for the specified tank
+	// sensorID := ""
+	var sensorID string
+	for _, sensor := range targetTank.Sensors {
+		if sensor.Meta.Kind == "WaterThermometer" {
+			sensorID = sensor.ID
+			break
+		}
+	}
+
+	// Read the request body
+	metaBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading request body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send a POST request to localhost/devices/tankID/meta
+	client := http.DefaultClient
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/sensors/%s/meta", tankID, sensorID), bytes.NewReader(metaBody))
+	if err != nil {
+		fmt.Println("Error creating POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to text/plain
+	req.Header.Set("Content-Type", "application/json")
+
+	resp2, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp2.Body.Close()
+
+	// Check the response status code
+	if resp2.StatusCode != http.StatusOK {
+		fmt.Println("Received non-OK response:", resp2.Status)
+		// Print the response body for further analysis
+		responseBody, _ := ioutil.ReadAll(resp2.Body)
+		fmt.Println("Response body:", string(responseBody))
+		w.WriteHeader(resp2.StatusCode)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write a success response
+	response := map[string]string{
+		"message": "Meta field updated successfully",
+	}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBytes)
+}
+
+func ChangeWaterQualityAlerts(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	tankID := vars["tankID"]
+
+	// Send a GET request to localhost/devices
+	resp, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the tank with the specified ID
+	var targetTank Tank
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			targetTank = tank
+			break
+		}
+	}
+
+	if targetTank.ID == "" {
+		// Tank with the specified ID not found
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Find the water level sensor value for the specified tank
+	// sensorID := ""
+	var sensorID string
+	for _, sensor := range targetTank.Sensors {
+		if sensor.Meta.Kind == "WaterPollutantSensor" {
+			sensorID = sensor.ID
+			break
+		}
+	}
+
+	// Read the request body
+	metaBody, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error reading request body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send a POST request to localhost/devices/tankID/meta
+	client := http.DefaultClient
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/sensors/%s/meta", tankID, sensorID), bytes.NewReader(metaBody))
+	if err != nil {
+		fmt.Println("Error creating POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to text/plain
+	req.Header.Set("Content-Type", "application/json")
+
+	resp2, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending POST request:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp2.Body.Close()
+
+	// Check the response status code
+	if resp2.StatusCode != http.StatusOK {
+		fmt.Println("Received non-OK response:", resp2.Status)
+		// Print the response body for further analysis
+		responseBody, _ := ioutil.ReadAll(resp2.Body)
+		fmt.Println("Response body:", string(responseBody))
+		w.WriteHeader(resp2.StatusCode)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	// Write a success response
+	response := map[string]string{
+		"message": "Meta field updated successfully",
+	}
+	responseBytes, err := json.Marshal(response)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.Write(responseBytes)
 }
