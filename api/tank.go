@@ -24,11 +24,10 @@ type Tank struct {
 }
 
 type TankMeta struct {
-	ReceiveNotification bool `json:"receivenotifications" bson:"receivenotifications"`
-	// Notifications       Notification `json:"notifications" bson:"notifications"`
-	Notifications Notification `json:"notifications" bson:"notifications"`
-	Location      Location     `json:"location" bson:"location"`
-	Settings      Settings     `json:"settings" bson:"settings"`
+	ReceiveNotification bool         `json:"receivenotifications" bson:"receivenotifications"`
+	Notifications       Notification `json:"notifications" bson:"notifications"`
+	Location            Location     `json:"location" bson:"location"`
+	Settings            Settings     `json:"settings" bson:"settings"`
 }
 
 //Majiup sensor structure
@@ -73,18 +72,15 @@ type Location struct {
 }
 
 type Settings struct {
-	Length   float64 `json:"length" bson:"length"`
-	Width    float64 `json:"width" bson:"width"`
 	Height   float64 `json:"height" bson:"height"`
-	Radius   float64 `json:"radius" bson:"radius"`
 	Capacity float64 `json:"capacity" bson:"capacity"`
-	Type     string  `json:"type,omitempty" bson:"type"`
-	MaxAlert float64 `json:"maxalert" bson:"maxalert"`
-	MinAlert float64 `json:"minalert" bson:"minalert"`
 }
 
 type SensorMeta struct {
-	Kind string `json:"kind" bson:"kind"`
+	Kind        string  `json:"kind" bson:"kind"`
+	Unit        string  `json:"units" bson:"units"`
+	CriticalMin float64 `json:"critical_min" bson:"critical_min"`
+	CriticalMax float64 `json:"critical_max" bson:"critical_max"`
 }
 
 type PumpMeta struct {
@@ -93,11 +89,6 @@ type PumpMeta struct {
 
 // validate checks if the Settings values are valid
 func (g *Settings) validate() error {
-	// Example validation: Ensure non-negative values for length, width, and height
-	if g.Length < 0 || g.Width < 0 || g.Height < 0 {
-		return errors.New("Settings dimensions must be non-negative")
-	}
-
 	// Example validation: Ensure non-negative value for capacity
 	if g.Capacity < 0 {
 		return errors.New("Settings capacity must be non-negative")
