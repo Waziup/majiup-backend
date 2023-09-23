@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"net/http"
 	"time"
 
@@ -14,6 +15,11 @@ type ValueData struct {
 	Timestamp *time.Time             `json:"timestamp"`
 	Value     float64                `json:"value,omitempty"`
 	Meta      map[string]interface{} `json:"meta,omitempty"`
+}
+
+type WaterLevel struct {
+	Level     int        `json:"liters"`
+	Timestamp *time.Time `json:"timestamp"`
 }
 
 // WaterLevelSensorHandler handles requests to retrieve water level sensors in a specific tank
@@ -75,10 +81,9 @@ func WaterLevelSensorHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-// GetWaterLevelHandler handles requests to retrieve the value of the water level sensor for a specific tank
+// GetWaterLevelHandler handles requests to retrieve the amount of water in liters for a specific tank
 func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-
 	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices
@@ -98,7 +103,7 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Unmarshal the JSON data into a slice of DeviceData
+	// Unmarshal the JSON data into a slice of Tank
 	var tanks []Tank
 	err = json.Unmarshal(body, &tanks)
 	if err != nil {
@@ -107,22 +112,61 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find the water level sensor value for the specified tank ID
-	var waterLevelValue interface{}
+	// Find the tank with the specified ID
+	var targetTank Tank
 	for _, tank := range tanks {
 		if tank.ID == tankID {
-			for _, sensor := range tank.Sensors {
-				if sensor.Meta.Kind == "WaterLevel" {
-					waterLevelValue = sensor.Value
-					break
-				}
-			}
+			targetTank = tank
 			break
 		}
 	}
 
-	// Marshal the water level value into JSON
-	response, err := json.Marshal(waterLevelValue)
+	if targetTank.ID == "" {
+		// Tank with the specified ID not found
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Find the water level sensor value for the specified tank
+	var waterLevelValue interface{}
+	var timestamp *time.Time
+	for _, sensor := range targetTank.Sensors {
+		if sensor.Meta.Kind == "WaterLevel" {
+			waterLevelValue = sensor.Value
+			timestamp = sensor.Time
+			break
+		}
+	}
+
+	if waterLevelValue == nil {
+		// Water level sensor not found for the specified tank
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	// Calculate the amount of water in liters
+	tankHeight := targetTank.Meta.Settings.Height
+	tankCapacity := targetTank.Meta.Settings.Capacity
+	sensorValue := waterLevelValue.(float64)
+	calculatedValue := ((tankHeight - sensorValue) / tankHeight) * tankCapacity
+	liters := int(math.Round(calculatedValue))
+	fmt.Println(timestamp)
+
+	response := WaterLevel{
+		Level:     liters,
+		Timestamp: timestamp,
+	}
+
+	responseJSONBytes, err := json.Marshal(response)
+
+	if err != nil {
+		fmt.Println("Error marshaling water level:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Marshal the amount of water in liters into JSON
+	// response, err := json.Marshal(map[string]int{"liters": liters})
 	if err != nil {
 		fmt.Println("Error marshaling water level value:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -133,10 +177,9 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(response)
+	w.Write(responseJSONBytes)
 }
 
-// GetWaterLevelHistoryHandler handles requests to retrieve water level values for a specific tank
 func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -195,8 +238,97 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Read the response body
 	valuesBody, err := ioutil.ReadAll(resp.Body)
+
 	if err != nil {
 		fmt.Println("Error reading values response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the values data into a slice of ValueData
+	var values []SensorData
+	err = json.Unmarshal(valuesBody, &values)
+	fmt.Println(values)
+
+	if err != nil {
+		fmt.Println("Error unmarshaling values:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send a GET request to localhost/devices
+	resp2, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp2.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp2.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the tank with the specified ID
+	var targetTank Tank
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			targetTank = tank
+			break
+		}
+	}
+	// Check if tank information is available
+	if targetTank.ID == "" {
+		fmt.Println("Tank information not found")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Calculate the amount of water in liters
+	if targetTank.Meta.Settings.Height == 0 || targetTank.Meta.Settings.Capacity == 0 {
+		fmt.Println("Tank height or capacity is zero, cannot calculate water level in liters")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var waterLevelEntries []WaterLevel
+	var timestamp *time.Time
+	for _, value := range values {
+		sensorValue := value.Value
+
+		timestamp = value.Time
+		calculatedValue := ((targetTank.Meta.Settings.Height - sensorValue.(float64)) / targetTank.Meta.Settings.Height) * targetTank.Meta.Settings.Capacity
+		liters := int(math.Round(calculatedValue))
+		entry := WaterLevel{
+			Level:     liters,
+			Timestamp: timestamp,
+		}
+		waterLevelEntries = append(waterLevelEntries, entry)
+	}
+
+	responseJSON := struct {
+		WaterLevels []WaterLevel `json:"waterLevels"`
+	}{
+		WaterLevels: waterLevelEntries,
+	}
+
+	// Marshal the response object into JSON
+	responseJSONBytes, err := json.Marshal(responseJSON)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -205,7 +337,7 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Write the JSON response to the response writer
-	w.Write(valuesBody)
+	w.Write(responseJSONBytes)
 }
 
 // WaterTemperatureSensorHandler handles requests to retrieve water temperature sensors in a specific tank
