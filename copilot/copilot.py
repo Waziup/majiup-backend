@@ -1,13 +1,19 @@
 import os
 import openai
 import requests
+from dotenv import load_dotenv
 
-# openai.api_key = os.getenv("OPENAI_API_KEY")
-KEY = "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"
+# Now you can access the environment variables like this
+import os
 
 MAJIUP_URL = "http://localhost:8081/tanks"
 
+KEY = os.getenv("SECRET_KEY")
+
 openai.api_key = KEY
+
+# Load environment variables from the .env file
+load_dotenv()
 
 def get_tank_data(url):
     resp = requests.get(url)
