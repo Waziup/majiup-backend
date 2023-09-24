@@ -6,14 +6,13 @@ from dotenv import load_dotenv
 # Now you can access the environment variables like this
 import os
 
-MAJIUP_URL = "http://localhost:8081/tanks"
+MAJIUP_URL = "http://localhost:8081/api/tanks"
 
-KEY = os.getenv("SECRET_KEY")
-
-openai.api_key = KEY
-
-# Load environment variables from the .env file
 load_dotenv()
+
+KEY = os.getenv("KEY")
+print(KEY)
+openai.api_key = KEY
 
 def get_tank_data(url):
     resp = requests.get(url)
@@ -22,7 +21,7 @@ def get_tank_data(url):
 
 def ask_copilot(query):
     
-    max_tokens = 256
+    max_tokens = 50
 
     query = query
     response = response = openai.Completion.create(

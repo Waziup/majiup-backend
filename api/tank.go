@@ -128,15 +128,19 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Remove the first element from the devices slice
-	if len(devices) > 0 {
-		devices = devices[1:]
-	}
+	// if len(devices) > 0 {
+	devices = devices[1:]
+	// }
 
 	// Create a new slice to store the transformed devices
 	transformedDevices := make([]Tank, len(devices))
 
 	// Transform the devices by extracting the required fields
+
 	for i, tank := range devices {
+		// fmt.Println(tank.Sensors)
+		var sensorEntry []SensorData
+
 		transformedDevices[i] = Tank{
 			ID:       tank.ID,
 			Name:     tank.Name,
@@ -146,6 +150,51 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 			Modified: tank.Modified,
 			Created:  tank.Created,
 		}
+
+		tankHeight := tank.Meta.Settings.Height
+		tankCapacity := tank.Meta.Settings.Capacity
+
+		for j, sensor := range tank.Sensors {
+			// 	// Check if the sensor kind is "WaterLevel"
+			if sensor.Meta.Kind == "WaterLevel" {
+				waterLevelValue := ((tankHeight - sensor.Value.(float64)) / tankHeight) * tankCapacity
+				fmt.Println(sensor.Value, j)
+				sensor.Value = int(waterLevelValue)
+			}
+
+			if sensor.Meta.Kind == "WaterPollutantSensor" {
+				var waterQuality string
+				// WaterQualityValue := sensor.Value
+				if sensor.Value != nil {
+					value, ok := sensor.Value.(float64)
+					if !ok {
+						fmt.Println("Error converting water quality value to float64")
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
+
+					if value > 0 && value < 300 {
+						waterQuality = "Excellent"
+					} else if value >= 300 && value < 900 {
+						waterQuality = "Good"
+					} else if value >= 900 {
+						waterQuality = "Poor"
+					} else {
+						waterQuality = "Unknown"
+					}
+					sensor.Value = waterQuality
+				}
+			}
+
+			// fmt.Println(transformedDevices[i])
+			sensorEntry = append(sensorEntry, sensor)
+
+			// 	// Update the sensor in the current tank
+			// transformedDevices[i].Sensors = sensor
+		}
+
+		transformedDevices[i].Sensors = sensorEntry
+
 	}
 
 	// Marshal the transformed devices slice into JSON
