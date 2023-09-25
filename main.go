@@ -53,7 +53,7 @@ func main() {
 	})
 
 	mainRouter := http.NewServeMux()
-	// mainRouter.Handle("/", frontendRouter)
+	mainRouter.Handle("/", frontendRouter)
 	mainRouter.Handle("/api/", http.StripPrefix("/api", apiRouter))
 
 	fmt.Println("Majiup running at PORT 8081")
