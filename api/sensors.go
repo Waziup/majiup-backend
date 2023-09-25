@@ -149,8 +149,15 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 	tankHeight := targetTank.Meta.Settings.Height
 	tankCapacity := targetTank.Meta.Settings.Capacity
 	sensorValue := waterLevelValue.(float64)
-	calculatedValue := ((tankHeight - sensorValue) / tankHeight) * tankCapacity
-	liters := int(math.Round(calculatedValue))
+
+	liters := 0
+
+	if tankCapacity > 0 && tankHeight > 0 {
+
+		calculatedValue := ((tankHeight - sensorValue) / tankHeight) * tankCapacity
+		liters = int(math.Round(calculatedValue))
+
+	}
 
 	response := WaterLevel{
 		Level:     liters,
@@ -296,21 +303,18 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Calculate the amount of water in liters
-	if targetTank.Meta.Settings.Height == 0 || targetTank.Meta.Settings.Capacity == 0 {
-		fmt.Println("Tank height or capacity is zero, cannot calculate water level in liters")
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	var waterLevelEntries []WaterLevel
 	var timestamp *time.Time
 	for _, value := range values {
 		sensorValue := value.Value
 
 		timestamp = value.Time
-		calculatedValue := ((targetTank.Meta.Settings.Height - sensorValue.(float64)) / targetTank.Meta.Settings.Height) * targetTank.Meta.Settings.Capacity
-		liters := int(math.Round(calculatedValue))
+		liters := 0
+		if targetTank.Meta.Settings.Height > 0 && targetTank.Meta.Settings.Capacity > 0 {
+			calculatedValue := ((targetTank.Meta.Settings.Height - sensorValue.(float64)) / targetTank.Meta.Settings.Height) * targetTank.Meta.Settings.Capacity
+			liters = int(math.Round(calculatedValue))
+		}
+
 		entry := WaterLevel{
 			Level:     liters,
 			Timestamp: timestamp,
