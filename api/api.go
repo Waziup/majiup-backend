@@ -10,6 +10,9 @@ func ApiServe(r *mux.Router) {
 	// Enable CORS middleware for all endpoints
 	r.HandleFunc("/{path:.*}", handleOptions).Methods("OPTIONS")
 
+	// Ask majiup copilot
+	r.HandleFunc("/ask-majiup-copilot", AskMajiupCopilot).Methods("POST")
+
 	// Endpoint to get tanks under majiup
 	r.HandleFunc("/tanks", handleCORS(TankHandler)).Methods("GET")
 
