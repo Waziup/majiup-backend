@@ -1,9 +1,7 @@
 # majiup-backend
 
-## Steps to run the Majiup Backend Locally on your computer
-
-### Requirements
-Golang - Install the latest version of GO
+## Steps to run the Majiup Backend in docker
+-----  -----
 
 ### Step 1 - Clone the repository
 ```
@@ -13,38 +11,23 @@ git clone https://github.com/JosephMusya/majiup-backend.git
 ```
 cd majiup-backend
 ```
-### Step 2 - Download the go dependencies
-```
-go mod download
-```
-### Step 4 - Build the binary file
-```
-go build -o main main.go
-```
-### Step 5 - Run the binary file
-```
-sudo ./main
-```
-You can alternatively run the main.go file
-```
-go run main.go
-```
-## Steps to run the Majiup Backend in docker
------  -----
-
+### Step 3 - Build Majiup image to run on the wazigate
 ```
 sudo docker build --platform linux/arm64  -t majiup .
 ```
+### Step 4 - Start the majiup application on the gateway
+The application runs on detached mode
+```
+sudo docker-compose up -d
+```
+You can check for any messages and troubleshooting approaches by
+```
+sudo docker logs <majiup-container>
+```
 
-```
-sudo docker save -o majiup.tar majiup
-```
 
-```
-sudo chmod 777 majiup.tar
-```
 
-## Available API endpoints
+## Majiup Endpoints
 The majiup-backend acts as a proxy api to http://localhost/devices which is wazigate api endpoint
 ### Tank API endpoints
 	1. GET = localhost:8081/tanks
