@@ -12,9 +12,6 @@ pipeline {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     // Clone the frontend repository
                     sh 'git clone https://github.com/Waziup/majiup-waziapp.git'
-
-                    // Clone the wazigate-edge repository
-                    sh 'git clone https://github.com/Waziup/wazigate-edge.git'                                
                 }
             }
         }
@@ -27,37 +24,21 @@ pipeline {
                         // Build the majiup-frontend
                         sh 'npm install'
                         sh 'npm run build'
-                    }                
+                        sh 'cp -r dist/ serve/'
+                    }
+                    sudo docker build --platform linux/arm64  -t waziup/majiup .
+                                
                 }
             }
         }
 
-        stage('Setup Frontend Production Files') {
+        stage('Deploy') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                    sh 'docker push waziup/majiup'
+                    sh 'remote_start.sh'
                     
-                    // Copy the dist folder to the main repository folder
-                    sh 'cp -r majiup-waziapp/dist ../serve/'
-                }
-            }
-        }
-
-        stage('Run Majiup') {
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    // Navigate to the cloned wazigate-edge
-                    dir('wazigate-edge') {
-                        // Build the Docker image
-                        sh 'docker build --tag=wazigate-edge .'
-                        
-                        // Run the Docker container (Waziedge)
-                        sh 'docker run -d --name wazigate-edge wazigate-edge'
-                    }
-                    // Navigate to the root directory
-                    dir('../') {
-                        // Build the Docker Compose in the main directory
-                        sh 'docker-compose up -d'
-                    }
+                    
                 }
             }
         }
