@@ -1,7 +1,12 @@
-# majiup-backend
+# Majiup
 
-## Steps to run the Majiup Backend in docker
+## Steps to run the Majiup
 -----  -----
+
+The frontend is served from the backend, therefore, there is no need to download the frontend files.
+Note that the application is running on the wazigate ip address, to access the application you must have your gateway powered.
+The application can be accessed from https://wazigate.local:8081
+****In place of wazigate.local, you can key in the ip address of your gateway.***
 
 ### Step 1 - Clone the repository
 ```
@@ -68,7 +73,9 @@ This step is similar to step 4
 ```
 sudo docker-compose up -d
 ```
+The application can be accessed from https://wazigate.local:8081
 
+The api is served by https://wazigate.local:8081/api/
 
 ## Majiup Endpoints
 The majiup-backend acts as a proxy api to http://localhost/devices which is wazigate api endpoint
