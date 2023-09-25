@@ -87,6 +87,104 @@ type PumpMeta struct {
 	Kind string `json:"kind" bson:"kind"`
 }
 
+func AskMajiupCopilot(w http.ResponseWriter, r *http.Request) {
+
+	const apiKey = "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"
+	const apiEndpoint = "https://api.openai.com/v1/engines/text-davinci-003/completions" // Update with the appropriate endpoint
+
+	query, err := ioutil.ReadAll(r.Body)
+
+	resp1, err := http.Get("http://localhost:8081/api/tanks")
+
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp1.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp1.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling devices:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tankJSON, err := json.Marshal(tanks)
+
+	requestData := map[string]interface{}{
+		"prompt":            string(query) + "\nThese are the tanks available" + string(tankJSON),
+		"max_tokens":        100, // Customize this according to your needs
+		"top_p":             1,
+		"frequency_penalty": 0.6,
+		"presence_penalty":  0.8,
+		"temperature":       0.2,
+	}
+
+	jsonData, err := json.Marshal(requestData)
+	if err != nil {
+		fmt.Println("Error marshalling JSON:", err)
+		return
+	}
+
+	client := &http.Client{}
+
+	req, err := http.NewRequest("POST", apiEndpoint, bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	responseBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return
+	}
+
+	var response map[string]interface{}
+	if err := json.Unmarshal(responseBody, &response); err != nil {
+		fmt.Println("Error decoding JSON response:", err)
+		return
+	}
+
+	generatedText := response["choices"].([]interface{})[0].(map[string]interface{})["text"].(string)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	// Marshal the "response" map to JSON
+	// jsonResponse, err := json.Marshal(generatedText)
+	jsonResponse := map[string]string{"reply": generatedText}
+	jsonBytes, err := json.Marshal(jsonResponse)
+
+	if err != nil {
+		fmt.Println("Error marshaling JSON response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Write the JSON response to the response writer
+	w.Write(jsonBytes)
+}
+
 // validate checks if the Settings values are valid
 func (g *Settings) validate() error {
 	// Example validation: Ensure non-negative value for capacity
@@ -135,8 +233,6 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 	// Create a new slice to store the transformed devices
 	transformedDevices := make([]Tank, len(devices))
 
-	// Transform the devices by extracting the required fields
-
 	for i, tank := range devices {
 		// fmt.Println(tank.Sensors)
 		var sensorEntry []SensorData
@@ -154,11 +250,11 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 		tankHeight := tank.Meta.Settings.Height
 		tankCapacity := tank.Meta.Settings.Capacity
 
-		for j, sensor := range tank.Sensors {
-			// 	// Check if the sensor kind is "WaterLevel"
-			if sensor.Meta.Kind == "WaterLevel" {
+		for _, sensor := range tank.Sensors {
+
+			// Check if the sensor kind is "WaterLevel"
+			if sensor.Meta.Kind == "WaterLevel" && tankHeight > 0 && tankCapacity > 0 {
 				waterLevelValue := ((tankHeight - sensor.Value.(float64)) / tankHeight) * tankCapacity
-				fmt.Println(sensor.Value, j)
 				sensor.Value = int(waterLevelValue)
 			}
 
