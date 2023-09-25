@@ -26,7 +26,7 @@ pipeline {
                         sh 'npm run build'
                         sh 'cp -r dist/ serve/'
                     }
-                    sudo docker build --platform linux/arm64  -t waziup/majiup .
+                    sh 'sudo docker build --platform linux/arm64  -t waziup/majiup .'
                                 
                 }
             }
@@ -36,8 +36,7 @@ pipeline {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     sh 'docker push waziup/majiup'
-                    sh 'remote_start.sh'
-                    
+                    sh 'remote_start_waziapp.sh'
                     
                 }
             }

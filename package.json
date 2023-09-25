@@ -1,0 +1,20 @@
+{
+	"name": "Majiup",
+	"version": "0.1.0",
+	"description": "Water management application",
+	"private": false,
+	"author": {
+		"name": "Waziup"
+	},
+	"license": "NA",
+	"waziapp": {
+		"icon": "ui/waziapp.svg",
+		"menu": {
+			"Majiup": {
+				"primary": "Majiup",
+				"icon": "ui/icon-cube.svg",
+				"href": "#/apps/waziup.majiup/ui/"
+			}
+		}
+	}
+}

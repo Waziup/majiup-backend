@@ -1,8 +1,11 @@
 # Stage 1: Build the Go application
 FROM golang:1.16-alpine AS build
 
+RUN apk add zip 
+
 # Set the working directory inside the container
 WORKDIR /app
+
 
 # Copy the Go module files
 COPY go.mod go.sum ./
@@ -13,6 +16,8 @@ RUN go mod download
 # Copy the rest of the application source code
 COPY . .
 
+RUN zip index.zip docker-compose.yml package.json
+
 # Build the Go application
 RUN go build -o majiup .
 
@@ -21,10 +26,11 @@ RUN go build -o majiup .
 FROM alpine:latest
 
 # Set the working directory inside the container
-WORKDIR /app
+WORKDIR /root/app
 
 # Copy the binary from the previous stage
 COPY --from=build /app/majiup ./
+COPY --from=build /app/index.zip ./
 
 # Copy the React files from the 'serve' directory in the root directory
 COPY serve ./serve
