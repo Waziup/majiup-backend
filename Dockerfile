@@ -16,11 +16,10 @@ RUN go mod download
 # Copy the rest of the application source code
 COPY . .
 
-RUN zip index.zip docker-compose.yml package.json
-
 # Build the Go application
 RUN go build -o majiup .
 
+RUN zip index.zip docker-compose.yml package.json
 
 # Stage 2: Create the final runtime image
 FROM alpine:latest
@@ -30,7 +29,7 @@ WORKDIR /root/app
 
 # Copy the binary from the previous stage
 COPY --from=build /app/majiup ./
-COPY --from=build /app/index.zip ./
+COPY --from=build /app/index.zip /
 
 # Copy the React files from the 'serve' directory in the root directory
 COPY serve ./serve

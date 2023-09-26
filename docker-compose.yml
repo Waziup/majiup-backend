@@ -4,7 +4,7 @@ services:
 
   majiup:
     build: .
-    image: majiup
+    image: waziup/majiup
     environment:
       - TEST_VAR=1
     ports:
