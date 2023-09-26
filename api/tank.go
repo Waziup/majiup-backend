@@ -60,11 +60,11 @@ type Notification struct {
 }
 
 type Message struct {
-	ID       int       `json:"id" bson:"id"`
-	TankName string    `json:"tank_name" bson:"tank_name"`
-	Date     time.Time `json:"time" bson:"time"`
-	Priority string    `json:"priority" bson:"priority"`
-	Message  string    `json:"message"`
+	ID       int    `json:"id" bson:"id"`
+	TankName string `json:"tank_name" bson:"tank_name"`
+	Date     string `json:"time" bson:"time"`
+	Priority string `json:"priority" bson:"priority"`
+	Message  string `json:"message"`
 }
 
 type Location struct {
