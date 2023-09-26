@@ -22,7 +22,8 @@ pipeline {
                     // Navigate to the cloned frontend repository and build
                     dir('majiup-waziapp') {
                         // Build the majiup-frontend
-                        sh 'npm --version'
+                        sh 'nvm use 18.18.0'
+                        sh 'npm version'
                         sh 'npm install --legacy-peer-deps'
                         sh 'npm run build'
                         sh 'cp -r dist/ serve/'
