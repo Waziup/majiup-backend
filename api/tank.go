@@ -56,14 +56,15 @@ type PumpData struct {
 }
 
 type Notification struct {
-	Messages []Message `json:"messages"`
+	Messages []Message `json:"messages" bson:"messages"`
 }
 
 type Message struct {
-	ID        string `json:"id" bson:"id"`
-	Read      bool   `json:"read" bson:"read"`
-	Timestamp string `json:"timestamp"`
-	Message   string `json:"message"`
+	ID       int       `json:"id" bson:"id"`
+	TankName string    `json:"tank_name" bson:"tank_name"`
+	Date     time.Time `json:"time" bson:"time"`
+	Priority string    `json:"priority" bson:"priority"`
+	Message  string    `json:"message"`
 }
 
 type Location struct {
