@@ -22,7 +22,7 @@ pipeline {
                     // Navigate to the cloned frontend repository and build
                     dir('majiup-waziapp') {
                         // Build the majiup-frontend
-                        sh 'npm install'
+                        sh 'npm install --legacy-peer-deps'
                         sh 'npm run build'
                         sh 'cp -r dist/ serve/'
                     }
