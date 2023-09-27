@@ -80,7 +80,7 @@ sudo docker-compose up -d
 ```
 The application can be accessed from https://wazigate.local:8081
 
-The api is served by https://wazigate.local:8081/api/
+The api is served by http://wazigate.local:8081/api/
 
 ## Majiup Endpoints
 The majiup-backend acts as a proxy api to http://localhost/devices which is wazigate api endpoint
