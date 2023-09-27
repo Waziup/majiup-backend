@@ -8,6 +8,11 @@ Note that the application is running on the wazigate ip address, to access the a
 The application can be accessed from https://wazigate.local:8081
 ****In place of wazigate.local, you can key in the ip address of your gateway.***
 
+### Step 0 - SSH to gateway
+```
+ssh pi@wazigate.local
+```
+
 ### Step 1 - Clone the repository
 ```
 git clone https://github.com/JosephMusya/majiup-backend.git
