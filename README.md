@@ -78,7 +78,7 @@ This step is similar to step 4
 ```
 sudo docker-compose up -d
 ```
-The application can be accessed from https://wazigate.local:8081
+The application can be accessed from http://wazigate.local:8081
 
 The api is served by http://wazigate.local:8081/api/
 
