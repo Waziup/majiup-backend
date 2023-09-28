@@ -89,7 +89,7 @@ Create a new device and assign unique adresses to the device  <br />
 Allocate one actuator, the other three sensors will be allocated automatically when the hardware mounted on the tank sends data <br />
 
 ### Step 2 -  Setup your hardware
-Upload this code to your hardware. Normally, the sensor sends data at inteval of 5 minutes.  <br />
+Upload this https://github.com/Waziup/majiup-hardware/tree/main/majiup-hardware code to your hardware. Normally, the sensor sends data at inteval of 5 minutes.  <br />
 Note: Edit the sensor pins defined in the code and the device address as connected to your hardware before uploading.  <br />
 e.g In the code, the TDS sensor pin is A1, temperature probe connected to pin A2, echo pin and trigger pins are D3 and D4 respectively  <br />
 When done changing the necessary fields, upload your code and set the device ready to make measurements. Turn the device on when you are done mounting to avoid streaming false value. Even though, this has been catered in the code to reject sending outlier values (false data).  <br />
