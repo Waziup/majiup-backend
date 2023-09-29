@@ -95,7 +95,7 @@ func AskMajiupCopilot(w http.ResponseWriter, r *http.Request) {
 
 	query, err := ioutil.ReadAll(r.Body)
 
-	resp1, err := http.Get("http://localhost:8081/api/tanks")
+	resp1, err := http.Get("http://wazigate.local:8081/api/tanks")
 
 	if err != nil {
 		fmt.Println("Error requesting devices:", err)
