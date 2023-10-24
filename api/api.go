@@ -11,7 +11,7 @@ func ApiServe(r *mux.Router) {
 	r.HandleFunc("/{path:.*}", handleOptions).Methods("OPTIONS")
 
 	// Ask majiup copilot
-	r.HandleFunc("/ask-majiup-copilot", AskMajiupCopilot).Methods("POST")
+	r.HandleFunc("/ask-majiup-copilot", handleCORS(AskMajiupCopilot)).Methods("POST")
 
 	// Endpoint to get tanks under majiup
 	r.HandleFunc("/tanks", handleCORS(TankHandler)).Methods("GET")
