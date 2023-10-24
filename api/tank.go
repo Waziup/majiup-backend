@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -90,12 +91,19 @@ type PumpMeta struct {
 
 func AskMajiupCopilot(w http.ResponseWriter, r *http.Request) {
 
-	const apiKey = "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"
+	hostHeader := r.Host
+
+	parts := strings.Split(hostHeader, ":")
+	ipAddress := parts[0]
+
+	const apiKey = "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"
 	const apiEndpoint = "https://api.openai.com/v1/engines/text-davinci-003/completions" // Update with the appropriate endpoint
 
 	query, err := ioutil.ReadAll(r.Body)
 
-	resp1, err := http.Get("http://wazigate.local:8081/api/tanks")
+	reqUrl := fmt.Sprintf("http://%s:8081/api/v1/tanks", ipAddress)
+
+	resp1, err := http.Get(reqUrl)
 
 	if err != nil {
 		fmt.Println("Error requesting devices:", err)
@@ -103,7 +111,6 @@ func AskMajiupCopilot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer resp1.Body.Close()
-
 	// Read the response body
 	body, err := ioutil.ReadAll(resp1.Body)
 	if err != nil {
@@ -120,7 +127,15 @@ func AskMajiupCopilot(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	tankJSON, err := json.Marshal(tanks)
+	if err != nil {
+		// Handle the error, e.g., log it or return an error response.
+		fmt.Println("Error marshaling tanks:", err)
+		return
+	}
+
+	// fmt.Println(tankJSON)
 
 	requestData := map[string]interface{}{
 		"prompt":            string(query) + "\nThese are the tanks available" + string(tankJSON),
@@ -307,6 +322,7 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Write the JSON response to the response writer
 	w.Write(response)
+
 }
 
 // GetTankByIDHandler handles requests to the /tanks/:tankID endpoint
