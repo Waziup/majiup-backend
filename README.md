@@ -80,7 +80,7 @@ sudo docker-compose up -d
 ```
 The application can be accessed from http://wazigate.local:8081
 
-The api is served by http://wazigate.local:8081/api/
+The api is served by http://wazigate.local:8081/api/v1/
 
 ## Creating your Majiup device
 ### Step 1 - Open the wazigate UI  
