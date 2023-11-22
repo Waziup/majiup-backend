@@ -18,27 +18,21 @@ pipeline {
 
         stage ('Build') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    // Navigate to the cloned frontend repository and build
-                    dir('majiup-waziapp') {
-                        // Build the majiup-frontend
-                        sh 'pnpm install'
-                        sh 'pnpm build'
-                        sh 'cp -r dist/ serve/'
-                    }
-                    sh 'sudo docker build --platform linux/arm64  -t waziup/majiup .'
-                                
+                // Navigate to the cloned frontend repository and build
+                dir('majiup-waziapp') {
+                    // Build the majiup-frontend
+                    sh 'pnpm install'
+                    sh 'pnpm build'
+                    sh 'cp -r dist/ serve/'
                 }
+                sh 'sudo docker build --platform linux/arm64  -t waziup/majiup .'
             }
         }
 
         stage('Deploy') {
             steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    sh 'docker push waziup/majiup'
-                    sh 'remote_start_waziapp.sh'
-                    
-                }
+               sh 'docker push waziup/majiup'
+               sh 'remote_start_waziapp.sh'
             }
         }
 
