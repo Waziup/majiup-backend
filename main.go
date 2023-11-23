@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"path/filepath"
@@ -21,7 +20,7 @@ func main() {
 	// Create a new Gorilla Mux router
 	frontendRouter := mux.NewRouter()
 
-	appDir := "serve/dist"
+	appDir := "serve"
 
 	// Define a custom handler to serve JavaScript and CSS files with correct MIME types
 	customHandler := func(w http.ResponseWriter, r *http.Request) {
@@ -55,23 +54,24 @@ func main() {
 	})
 
 	mainRouter := http.NewServeMux()
-	// mainRouter.Handle("/", frontendRouter)
-	mainRouter.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			frontendRouter.ServeHTTP(w, r)
-			log.Printf("[%s] Serving majiup frontend: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
-			return
-		}
+	mainRouter.Handle("/", frontendRouter)
+	// mainRouter.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	// 	if r.URL.Path == "/" {
+	// 		frontendRouter.ServeHTTP(w, r)
+	// 		log.Printf("[%s] Serving majiup frontend: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+	// 		return
+	// 	}
 
-		// Handle 404 here
-		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, "404 Not Found\n\nNo matching URL Patterns.\n 1. '/'\n 2. '/api/v1/*")
-		log.Printf("[ ERR ] [%s] Route Not Found: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+	// 	// Handle 404 here
+	// 	w.WriteHeader(http.StatusNotFound)
+	// 	fmt.Fprint(w, "404 Not Found\n\nNo matching URL Patterns.\n 1. '/'\n 2. '/api/v1/*")
+	// 	log.Printf("[ ERR ] [%s] Route Not Found: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
-	}))
+	// }))
 
 	mainRouter.Handle("/api/v1/", http.StripPrefix("/api/v1", apiRouter))
 
-	fmt.Println("Majiup running at PORT 8081")
+	log.Printf("[ SUCCESS ] [ %s ] Majiup running at PORT 8081", time.Now().Format(time.RFC3339))
+
 	http.ListenAndServe(":8081", mainRouter)
 }
