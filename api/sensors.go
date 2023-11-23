@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"net/http"
 	"time"
@@ -77,6 +78,8 @@ func WaterLevelSensorHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Water level fetch: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
@@ -182,6 +185,8 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Water quantity fetched (Liters): %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(responseJSONBytes)
@@ -339,6 +344,8 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
+	log.Printf("[%s] Water quantity history fetched: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	// Write the JSON response to the response writer
 	w.Write(responseJSONBytes)
 }
@@ -398,6 +405,8 @@ func WaterTemperatureSensorHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Fetched water temperature sensors: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
@@ -459,6 +468,8 @@ func GetWaterTemperatureValueHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Fetched water temperature value: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
@@ -532,6 +543,8 @@ func GetWaterTemperatureHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
+	log.Printf("[%s] Fetch water level history: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	// Write the JSON response to the response writer
 	w.Write(valuesBody)
 }
@@ -591,6 +604,8 @@ func WaterQualitySensorHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Fetched Water quality sensors: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
@@ -681,6 +696,8 @@ func GetWaterQualityValueHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Fetched Water quality: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(responseBody)
@@ -796,6 +813,8 @@ func GetWaterQualityHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
+	log.Printf("[%s] Fetched Water quality history: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	// Write the JSON response to the response writer
 	w.Write(response)
 }
@@ -906,6 +925,9 @@ func ChangeWaterLevelAlerts(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[%s] Changed water tank level alerts: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	w.Write(responseBytes)
 }
 
@@ -1015,6 +1037,9 @@ func ChangeWaterTemperatureAlerts(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[%s] Changed water tank temperature alerts: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	w.Write(responseBytes)
 }
 
@@ -1124,5 +1149,8 @@ func ChangeWaterQualityAlerts(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[%s] Changed water tank quality alerts: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	w.Write(responseBytes)
 }

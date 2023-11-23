@@ -1,7 +1,9 @@
 package api
 
 import (
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -11,7 +13,7 @@ func ApiServe(r *mux.Router) {
 	r.HandleFunc("/{path:.*}", handleOptions).Methods("OPTIONS")
 
 	// Ask majiup copilot
-	r.HandleFunc("/ask-majiup-copilot", handleCORS(AskMajiupCopilot)).Methods("POST")
+	// r.HandleFunc("/ask-majiup-copilot", handleCORS(AskMajiupCopilot)).Methods("POST")
 
 	// Endpoint to get tanks under majiup
 	r.HandleFunc("/tanks", handleCORS(TankHandler)).Methods("GET")
@@ -94,6 +96,14 @@ func ApiServe(r *mux.Router) {
 
 	// Endpoint to post pump state
 	r.HandleFunc("/tanks/{tankID}/pumps/state", handleCORS(TankStatePostHandler)).Methods("POST")
+
+	// Handle undefined routes
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Log the timestamp and the endpoint that was not found
+		log.Printf("[%s] Endpoint not found: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+		// Respond with a 404 status
+		w.WriteHeader(http.StatusNotFound)
+	})
 }
 
 // handleOptions handles preflight OPTIONS requests

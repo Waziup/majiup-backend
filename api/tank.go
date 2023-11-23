@@ -3,11 +3,10 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -89,129 +88,129 @@ type PumpMeta struct {
 	Kind string `json:"kind" bson:"kind"`
 }
 
-func AskMajiupCopilot(w http.ResponseWriter, r *http.Request) {
+// func AskMajiupCopilot(w http.ResponseWriter, r *http.Request) {
 
-	hostHeader := r.Host
+// 	hostHeader := r.Host
 
-	parts := strings.Split(hostHeader, ":")
-	ipAddress := parts[0]
+// 	parts := strings.Split(hostHeader, ":")
+// 	ipAddress := parts[0]
 
-	const apiKey = "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"
-	const apiEndpoint = "https://api.openai.com/v1/engines/text-davinci-003/completions" // Update with the appropriate endpoint
+// 	const apiKey = "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"
+// 	const apiEndpoint = "https://api.openai.com/v1/engines/text-davinci-003/completions" // Update with the appropriate endpoint
 
-	query, err := ioutil.ReadAll(r.Body)
+// 	query, err := ioutil.ReadAll(r.Body)
 
-	reqUrl := fmt.Sprintf("http://%s:8081/api/v1/tanks", ipAddress)
+// 	reqUrl := fmt.Sprintf("http://%s:8081/api/v1/tanks", ipAddress)
 
-	resp1, err := http.Get(reqUrl)
+// 	resp1, err := http.Get(reqUrl)
 
-	if err != nil {
-		fmt.Println("Error requesting devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp1.Body.Close()
-	// Read the response body
-	body, err := ioutil.ReadAll(resp1.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+// 	if err != nil {
+// 		fmt.Println("Error requesting devices:", err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return
+// 	}
+// 	defer resp1.Body.Close()
+// 	// Read the response body
+// 	body, err := ioutil.ReadAll(resp1.Body)
+// 	if err != nil {
+// 		fmt.Println("Error reading response body:", err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return
+// 	}
 
-	// Unmarshal the JSON data into a slice of Tank
-	var tanks []Tank
-	err = json.Unmarshal(body, &tanks)
-	if err != nil {
-		fmt.Println("Error unmarshaling devices:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+// 	// Unmarshal the JSON data into a slice of Tank
+// 	var tanks []Tank
+// 	err = json.Unmarshal(body, &tanks)
+// 	if err != nil {
+// 		fmt.Println("Error unmarshaling devices:", err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return
+// 	}
 
-	tankJSON, err := json.Marshal(tanks)
-	if err != nil {
-		// Handle the error, e.g., log it or return an error response.
-		fmt.Println("Error marshaling tanks:", err)
-		return
-	}
+// 	tankJSON, err := json.Marshal(tanks)
+// 	if err != nil {
+// 		// Handle the error, e.g., log it or return an error response.
+// 		fmt.Println("Error marshaling tanks:", err)
+// 		return
+// 	}
 
-	// fmt.Println(tankJSON)
+// 	// fmt.Println(tankJSON)
 
-	requestData := map[string]interface{}{
-		"prompt":            string(query) + "\nThese are the tanks available" + string(tankJSON),
-		"max_tokens":        100, // Customize this according to your needs
-		"top_p":             1,
-		"frequency_penalty": 0.6,
-		"presence_penalty":  0.8,
-		"temperature":       0.2,
-	}
+// 	requestData := map[string]interface{}{
+// 		"prompt":            string(query) + "\nThese are the tanks available" + string(tankJSON),
+// 		"max_tokens":        100, // Customize this according to your needs
+// 		"top_p":             1,
+// 		"frequency_penalty": 0.6,
+// 		"presence_penalty":  0.8,
+// 		"temperature":       0.2,
+// 	}
 
-	jsonData, err := json.Marshal(requestData)
-	if err != nil {
-		fmt.Println("Error marshalling JSON:", err)
-		return
-	}
+// 	jsonData, err := json.Marshal(requestData)
+// 	if err != nil {
+// 		fmt.Println("Error marshalling JSON:", err)
+// 		return
+// 	}
 
-	client := &http.Client{}
+// 	client := &http.Client{}
 
-	req, err := http.NewRequest("POST", apiEndpoint, bytes.NewBuffer(jsonData))
-	if err != nil {
-		fmt.Println("Error creating request:", err)
-		return
-	}
+// 	req, err := http.NewRequest("POST", apiEndpoint, bytes.NewBuffer(jsonData))
+// 	if err != nil {
+// 		fmt.Println("Error creating request:", err)
+// 		return
+// 	}
 
-	req.Header.Set("Authorization", "Bearer "+apiKey)
-	req.Header.Set("Content-Type", "application/json")
+// 	req.Header.Set("Authorization", "Bearer "+apiKey)
+// 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		fmt.Println("Error sending request:", err)
-		return
-	}
-	defer resp.Body.Close()
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		fmt.Println("Error sending request:", err)
+// 		return
+// 	}
+// 	defer resp.Body.Close()
 
-	responseBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading response body:", err)
-		return
-	}
+// 	responseBody, err := ioutil.ReadAll(resp.Body)
+// 	if err != nil {
+// 		fmt.Println("Error reading response body:", err)
+// 		return
+// 	}
 
-	var response map[string]interface{}
-	if err := json.Unmarshal(responseBody, &response); err != nil {
-		fmt.Println("Error decoding JSON response:", err)
-		return
-	}
+// 	var response map[string]interface{}
+// 	if err := json.Unmarshal(responseBody, &response); err != nil {
+// 		fmt.Println("Error decoding JSON response:", err)
+// 		return
+// 	}
 
-	generatedText := response["choices"].([]interface{})[0].(map[string]interface{})["text"].(string)
+// 	generatedText := response["choices"].([]interface{})[0].(map[string]interface{})["text"].(string)
 
-	w.Header().Set("Content-Type", "application/json")
+// 	w.Header().Set("Content-Type", "application/json")
 
-	// Marshal the "response" map to JSON
-	// jsonResponse, err := json.Marshal(generatedText)
-	jsonResponse := map[string]string{"reply": generatedText}
-	jsonBytes, err := json.Marshal(jsonResponse)
+// 	// Marshal the "response" map to JSON
+// 	// jsonResponse, err := json.Marshal(generatedText)
+// 	jsonResponse := map[string]string{"reply": generatedText}
+// 	jsonBytes, err := json.Marshal(jsonResponse)
 
-	if err != nil {
-		fmt.Println("Error marshaling JSON response:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+// 	if err != nil {
+// 		fmt.Println("Error marshaling JSON response:", err)
+// 		w.WriteHeader(http.StatusInternalServerError)
+// 		return
+// 	}
 
-	// Write the JSON response to the response writer
-	w.Write(jsonBytes)
-}
+// 	// Write the JSON response to the response writer
+// 	w.Write(jsonBytes)
+// }
 
 // validate checks if the Settings values are valid
-func (g *Settings) validate() error {
-	// Example validation: Ensure non-negative value for capacity
-	if g.Capacity < 0 {
-		return errors.New("Settings capacity must be non-negative")
-	}
+// func (g *Settings) validate() error {
+// 	// Example validation: Ensure non-negative value for capacity
+// 	if g.Capacity < 0 {
+// 		return errors.New("Settings capacity must be non-negative")
+// 	}
 
-	// Additional validation checks...
+// 	// Additional validation checks...
 
-	return nil
-}
+// 	return nil
+// }
 
 // TankHandler handles requests to the /tanks endpoint
 func TankHandler(w http.ResponseWriter, r *http.Request) {
@@ -305,6 +304,9 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 			// transformedDevices[i].Sensors = sensor
 		}
 
+		fmt.Println("Fetched available tanks: ")
+		log.Printf("[%s] Fetched tanks: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 		transformedDevices[i].Sensors = sensorEntry
 
 	}
@@ -382,6 +384,8 @@ func GetTankByIDHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
+	log.Printf("[%s] Fetched tank %s: %s %s", time.Now().Format(time.RFC3339), tankID, r.Method, r.URL.Path)
+
 	// Write the JSON response to the response writer
 	w.Write(response)
 }
@@ -429,6 +433,8 @@ func TankSensorHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Fetched tank sensors: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(responseBody)
@@ -752,6 +758,8 @@ func GetSensorHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
+	log.Printf("[%s] Fetched all tank sensor history: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	// Write the JSON response to the response writer
 	w.Write(response)
 }
@@ -822,6 +830,8 @@ func getSensorHistory(tankID, sensorKind string) ([]ValueData, error) {
 		values[i].Timestamp = targetSensor.Time
 	}
 
+	log.Printf("[%s] Tank sensor histoey:", time.Now().Format(time.RFC3339))
+
 	return values, nil
 }
 
@@ -879,6 +889,9 @@ func ChangeNameHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[%s] Tank name changed: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	w.Write(responseBytes)
 }
 
@@ -939,6 +952,9 @@ func postMetaField(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[%s] Tank meta field updated successfully: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	w.Write(responseBytes)
 }
 
@@ -986,6 +1002,8 @@ func getMetaFields(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Fetched tank meta fields: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the response body to the response writer
 	w.Write(body)
@@ -1035,5 +1053,8 @@ func DeleteTank(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[%s] Tank deleted successfuly: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	w.Write(responseBytes)
 }

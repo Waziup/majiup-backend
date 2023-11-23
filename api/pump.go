@@ -5,12 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 )
 
-// WaterQualitySensorHandler handles requests to retrieve water quality sensors in a specific tank
+// WaterQualitySensorHandler handles requests to retrieve tanks in a specific tank
 func TankPumpHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -75,6 +77,8 @@ func TankPumpHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Retrieved tank pumps: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
@@ -150,6 +154,8 @@ func TankStateHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[%s] Fetched pump state: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
@@ -257,6 +263,8 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
+	log.Printf("[%s] Fetched pump state history: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
 	// Write the JSON response to the response writer
 	w.Write(response)
 }
@@ -339,6 +347,8 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Pump status changed: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
