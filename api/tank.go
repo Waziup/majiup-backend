@@ -304,7 +304,6 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 			// transformedDevices[i].Sensors = sensor
 		}
 
-		fmt.Println("Fetched available tanks: ")
 		log.Printf("[%s] Fetched tanks: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 		transformedDevices[i].Sensors = sensorEntry

@@ -59,15 +59,15 @@ func main() {
 	mainRouter.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
 			frontendRouter.ServeHTTP(w, r)
+			log.Printf("[%s] Serving majiup frontend: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 			return
 		}
 
 		// Handle 404 here
 		w.WriteHeader(http.StatusNotFound)
-		fmt.Fprint(w, "404 Not Found - No matching URL Patterns.\n 1. '/'\n 2. '/api/v1/*")
+		fmt.Fprint(w, "404 Not Found\n\nNo matching URL Patterns.\n 1. '/'\n 2. '/api/v1/*")
 		log.Printf("[ ERR ] [%s] Route Not Found: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
-		// fmt.Fprint(w, "")
 	}))
 
 	mainRouter.Handle("/api/v1/", http.StripPrefix("/api/v1", apiRouter))
