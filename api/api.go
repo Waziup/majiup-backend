@@ -100,9 +100,16 @@ func ApiServe(r *mux.Router) {
 	// Handle undefined routes
 	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Log the timestamp and the endpoint that was not found
-		log.Printf("[%s] Endpoint not found: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+		log.Printf(" [ ERR ] [%s] Endpoint not found: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 		// Respond with a 404 status
 		w.WriteHeader(http.StatusNotFound)
+	})
+
+	// Handle undefined routes
+	r.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Log the timestamp and the endpoint that was not found
+		log.Printf(" [ ERR ][%s] Method not allowed: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+		w.WriteHeader(http.StatusBadRequest)
 	})
 }
 
