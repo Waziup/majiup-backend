@@ -12,7 +12,7 @@ ssh pi@wazigate.local
 ```
 Clone the Majiup repository
 ```
-https://github.com/Waziup/majiup-backend.git
+git clone https://github.com/Waziup/majiup-backend.git
 ```
 Navigate into the repository
 ```
