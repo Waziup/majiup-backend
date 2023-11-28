@@ -1,5 +1,7 @@
 # Majiup
 
+## 
+
 ## Steps to run the Majiup
 -----  -----
 
@@ -13,72 +15,35 @@ The application can be accessed from https://wazigate.local:8081<br />
 ssh pi@wazigate.local
 ```
 
-### Step 1 - Clone the repository
+### Step 1 - Pull the Majiup Image from dockerhub
 ```
-git clone https://github.com/JosephMusya/majiup-backend.git
+docker pull waziupiot/majiup:v1.1
 ```
-### Step 2 - Navigate to the majiup-backend repository
+Confirm that the image is pulled successfully
 ```
-cd majiup-backend
+docker images
 ```
-### Step 3 - Build Majiup image to run on the wazigate
-```
-sudo docker build --platform linux/arm64  -t majiup .
-```
-If you are building the image on the gateway itself, run the following command to start the application
+The Majiup image should be among the images 
 
-### Step 4 - Start the majiup application on the gateway
-The application runs on detached mode
+### Step 2 - Create the docker container fromt the docker-compose file
 ```
-sudo docker-compose up -d
+docker-compose up -d
 ```
-You can check for any messages and troubleshooting approaches by
+The container is build and run in detached mode
+
+### Step 3 - Check the container ID
+```
+docker ps -a
+```
+Confirm the container ID
+
+### Step 4 - Container trace logs
+
+You can check the container logs by running the following command
+
 ```
 sudo docker logs <majiup-container>
 ```
-If you are on a separed computer, you will need ssh and ftp enabled in your gateway to transfer the build image.
-
-### Step 5 - Save the image in a zip folder
-```
-sudo docker save -o majiup.tar majiup
-```
-This saves the image into majiup.tar compressed folder
-You can confirm the image folder with
-```
-ls
-```
-
-### Step 6 - Change the write and read permission for the folder
-```
-sudo chmod 777 majiup.tar
-```
-
-### Step 7 - Transfer the folder to gateway
-```
-ftp <IP_ADDRESS>
-```
-The IP address is the gateway's ip address <br />
-The default username is ***pi*** and password is ***loragateway***
-
-Transfer the file with
-```
-put majiup.tar
-```
-### Step 8 - SSH into the raspberry pi
-```
-ssh pi@<IP_ADDRESS>
-```
-Load majiup image from the compressed folder
-```
-sudo docker image load -i majiup.tar
-```
-
-### Step 9 - Run the application
-This step is similar to step 4
-```
-sudo docker-compose up -d
-```
-The application can be accessed from http://wazigate.local:8081
 
 The api is served by http://wazigate.local:8081/api/v1/
 
