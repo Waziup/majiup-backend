@@ -19,13 +19,13 @@ pipeline {
         stage ('Build') {
             steps {
                 // Navigate to the cloned frontend repository and build
-                dir('majiup-waziapp') {
-                    // Build the majiup-frontend
-                    sh 'pnpm install'
-                    sh 'pnpm build'
-                    sh 'cp -r dist/ serve/'
-                }
-                sh 'sudo docker build --platform linux/arm64  -t waziup/majiup .'
+                //dir('majiup-waziapp') {
+                //    // Build the majiup-frontend
+                //    sh 'pnpm install'
+                //    sh 'pnpm build'
+                //    sh 'cp -r dist/ serve/'
+                //}
+                sh 'sudo docker buildx bake --load --progress plain'
             }
         }
 

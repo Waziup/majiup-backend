@@ -3,7 +3,10 @@ version: "3.8"
 services:
 
   majiup:
-    build: .
+    build: 
+      context: .
+      x-bake:
+        platforms: "linux/arm64"
     image: waziup/majiup
     environment:
       - TEST_VAR=1
