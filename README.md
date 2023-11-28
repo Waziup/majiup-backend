@@ -1,9 +1,5 @@
 # Majiup
-
-## 
-
 ## Steps to run the Majiup
------  -----
 
 The frontend is served from the backend, therefore, there is no need to download the frontend files. <br />
 Note that the application is running on the wazigate ip address, to access the application you must have your gateway powered.<br />
@@ -13,6 +9,14 @@ The application can be accessed from https://wazigate.local:8081<br />
 ### Step 0 - SSH to gateway
 ```
 ssh pi@wazigate.local
+```
+Clone the Majiup repository
+```
+https://github.com/Waziup/majiup-backend.git
+```
+Navigate into the repository
+```
+cd majiup-backend
 ```
 
 ### Step 1 - Pull the Majiup Image from dockerhub
@@ -25,7 +29,7 @@ docker images
 ```
 The Majiup image should be among the images 
 
-### Step 2 - Create the docker container fromt the docker-compose file
+### Step 2 - Create the docker container from the docker-compose file
 ```
 docker-compose up -d
 ```
@@ -38,13 +42,10 @@ docker ps -a
 Confirm the container ID
 
 ### Step 4 - Container trace logs
-
 You can check the container logs by running the following command
-
 ```
 sudo docker logs <majiup-container>
 ```
-
 The api is served by http://wazigate.local:8081/api/v1/
 
 ## Creating your Majiup device
