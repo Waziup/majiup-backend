@@ -28,6 +28,7 @@ type TankMeta struct {
 	Notifications       Notification `json:"notifications" bson:"notifications"`
 	Location            Location     `json:"location" bson:"location"`
 	Settings            Settings     `json:"settings" bson:"settings"`
+	Profile				Profile		 `json:"profile" bson:"profile"`
 }
 
 //Majiup sensor structure
@@ -71,6 +72,14 @@ type Location struct {
 	Longitude float64 `json:"longitude" bson:"longitude"`
 	Latitude  float64 `json:"latitude" bson:"latitude"`
 }
+
+type Profile struct {
+	FirstName	string `json:"first_name" bson:"first_name"`
+	LastName	string `json:"last_name" bson:"last_name"`
+	Username	string `json:"username" bson:"username"`
+	Phone 		string `json:"phone" bson:"phone"`
+	Email 		string `json:"email" bson:"email"`
+} 
 
 type Settings struct {
 	Height   float64 `json:"height" bson:"height"`
@@ -964,7 +973,7 @@ func getMetaFields(w http.ResponseWriter, r *http.Request) {
 	tankID := vars["tankID"]
 
 	// Create a new GET request
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s/meta", tankID), nil)
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		w.WriteHeader(http.StatusInternalServerError)

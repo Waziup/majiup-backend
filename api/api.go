@@ -39,10 +39,10 @@ func ApiServe(r *mux.Router) {
 	/*--------------------------------TANK META ENDPOINTS-------------------------------*/
 
 	// GET Meta fields (settings & notifications)
-	r.HandleFunc("/tanks/{tankID}/meta", handleCORS(getMetaFields)).Methods("GET")
+	r.HandleFunc("/tanks/{tankID}/profile", handleCORS(getMetaFields)).Methods("GET")
 
 	// POST Meta fields
-	r.HandleFunc("/tanks/{tankID}/meta", handleCORS(postMetaField)).Methods("POST")
+	r.HandleFunc("/tanks/{tankID}/profile", handleCORS(postMetaField)).Methods("POST")
 
 	/*-----------------------------WATER LEVEL SENSOR ENDPOINTS--------------------------------*/
 
