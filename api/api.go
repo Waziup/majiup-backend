@@ -56,7 +56,7 @@ func ApiServe(r *mux.Router) {
 	r.HandleFunc("/tanks/{tankID}/tank-sensors/waterlevel/values", handleCORS(GetWaterLevelHistoryHandler)).Methods("GET")
 
 	// Endpoint to change the waterlevel meta field
-	r.HandleFunc("/tanks/{tankID}/tank-sensors/waterlevel/meta", handleCORS(ChangeWaterLevelAlerts)).Methods("POST")
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/waterlevel/alerts", handleCORS(ChangeWaterLevelAlerts)).Methods("POST")
 
 	/*-----------------------------WATER TEMPERATURE SENSOR ENDPOINTS---------------------------*/
 
@@ -70,7 +70,7 @@ func ApiServe(r *mux.Router) {
 	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-temperature/values", handleCORS(GetWaterTemperatureHistoryHandler)).Methods("GET")
 
 	// Endpoint to change the water temp level
-	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-temperature/meta", handleCORS(ChangeWaterTemperatureAlerts)).Methods("POST")
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-temperature/alerts", handleCORS(ChangeWaterTemperatureAlerts)).Methods("POST")
 
 	/*-----------------------------WATER QUALITY SENSOR ENDPOINTS---------------------------*/
 
@@ -84,7 +84,7 @@ func ApiServe(r *mux.Router) {
 	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality/values", handleCORS(GetWaterQualityHistoryHandler)).Methods("GET")
 
 	// Endpoint to change water quality alerts
-	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality/meta", handleCORS(ChangeWaterQualityAlerts)).Methods("POST")
+	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality/alerts", handleCORS(ChangeWaterQualityAlerts)).Methods("POST")
 
 	/*---------------------------------PUMP ENDPOINTS-------------------------------------------*/
 
