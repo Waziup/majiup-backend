@@ -876,6 +876,7 @@ func ChangeWaterLevelAlerts(w http.ResponseWriter, r *http.Request) {
 
 	// Read the request body
 	metaBody, err := ioutil.ReadAll(r.Body)
+
 	if err != nil {
 		fmt.Println("Error reading request body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
