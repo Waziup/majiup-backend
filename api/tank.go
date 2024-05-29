@@ -69,6 +69,11 @@ type Message struct {
 }
 
 type Location struct {
+	Cordinates 	Cordinates `json:"cordinates" bson:"cordinates"`
+	Address		string `json:"address" bson:"address"`
+}
+
+type Cordinates struct {
 	Longitude float64 `json:"longitude" bson:"longitude"`
 	Latitude  float64 `json:"latitude" bson:"latitude"`
 }
@@ -79,6 +84,7 @@ type Profile struct {
 	Username	string `json:"username" bson:"username"`
 	Phone 		string `json:"phone" bson:"phone"`
 	Email 		string `json:"email" bson:"email"`
+	Address		string `json:"address" bson:"address"`
 } 
 
 type Settings struct {
@@ -523,169 +529,171 @@ func TankLocationHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // TankLocationHandler handles requests to retrieve or update the location data of a specific tank
-func TankLocationPostHandler(w http.ResponseWriter, r *http.Request) {
+// func TankLocationPostHandler(w http.ResponseWriter, r *http.Request) {
 
-	vars := mux.Vars(r)
+// 	vars := mux.Vars(r)
 
-	tankID := vars["tankID"]
+// 	tankID := vars["tankID"]
 
-	if r.Method == http.MethodGet {
-		// GET request: Retrieve the location data
+// 	if r.Method == http.MethodGet {
+// 		// GET request: Retrieve the location data
 
-		// Create a new HTTP client
-		client := http.Client{}
+// 		// Create a new HTTP client
+// 		client := http.Client{}
 
-		// Send a GET request to localhost/devices/tankID
-		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
-		if err != nil {
-			fmt.Println("Error creating request:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Send a GET request to localhost/devices/tankID
+// 		req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
+// 		if err != nil {
+// 			fmt.Println("Error creating request:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Set the Accept header to specify JSON response
-		req.Header.Set("Accept", "application/json")
+// 		// Set the Accept header to specify JSON response
+// 		req.Header.Set("Accept", "application/json")
 
-		// Send the request
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Error retrieving tank:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		defer resp.Body.Close()
+// 		// Send the request
+// 		resp, err := client.Do(req)
+// 		if err != nil {
+// 			fmt.Println("Error retrieving tank:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
+// 		defer resp.Body.Close()
 
-		// Read the response body
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading response body:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Read the response body
+// 		body, err := ioutil.ReadAll(resp.Body)
+// 		if err != nil {
+// 			fmt.Println("Error reading response body:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Print the response body for debugging
-		fmt.Println("Response Body:", string(body))
+// 		// Print the response body for debugging
+// 		fmt.Println("Response Body:", string(body))
 
-		// Unmarshal the JSON data into a Tank struct
-		var tank Tank
-		err = json.Unmarshal(body, &tank)
-		if err != nil {
-			fmt.Println("Error unmarshaling tank:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Unmarshal the JSON data into a Tank struct
+// 		var tank Tank
+// 		err = json.Unmarshal(body, &tank)
+// 		if err != nil {
+// 			fmt.Println("Error unmarshaling tank:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Get the location data from the meta field
-		location := tank.Meta.Location
+// 		// Get the location data from the meta field
+// 		location := tank.Meta.Location
 
-		// Marshal the location data into JSON
-		response, err := json.Marshal(location)
-		if err != nil {
-			fmt.Println("Error marshaling location:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Marshal the location data into JSON
+// 		response, err := json.Marshal(location)
+// 		if err != nil {
+// 			fmt.Println("Error marshaling location:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Set the Content-Type header to application/json
-		w.Header().Set("Content-Type", "application/json")
+// 		// Set the Content-Type header to application/json
+// 		w.Header().Set("Content-Type", "application/json")
 
-		// Write the JSON response to the response writer
-		w.Write(response)
-	} else if r.Method == http.MethodPost {
-		// POST request: Update the location data
+// 		// Write the JSON response to the response writer
+// 		w.Write(response)
+// 	} else if r.Method == http.MethodPost {
+// 		// POST request: Update the location data
 
-		// Read the request body
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			fmt.Println("Error reading request body:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Read the request body
+// 		body, err := ioutil.ReadAll(r.Body)
+// 		if err != nil {
+// 			fmt.Println("Error reading request body:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Unmarshal the JSON data into a map
-		var request map[string]interface{}
-		err = json.Unmarshal(body, &request)
-		if err != nil {
-			fmt.Println("Error unmarshaling request body:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Unmarshal the JSON data into a map
+// 		var request map[string]interface{}
+// 		err = json.Unmarshal(body, &request)
+// 		if err != nil {
+// 			fmt.Println("Error unmarshaling request body:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Extract the latitude and longitude from the request body
-		latitude, ok := request["latitude"].(float64)
-		if !ok {
-			fmt.Println("Invalid latitude value")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+// 		// Extract the latitude and longitude from the request body
+// 		latitude, ok := request["latitude"].(float64)
+// 		if !ok {
+// 			fmt.Println("Invalid latitude value")
+// 			w.WriteHeader(http.StatusBadRequest)
+// 			return
+// 		}
 
-		longitude, ok := request["longitude"].(float64)
-		if !ok {
-			fmt.Println("Invalid longitude value")
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
+// 		longitude, ok := request["longitude"].(float64)
 
-		// Create a new location object
-		location := Location{
-			Latitude:  latitude,
-			Longitude: longitude,
-		}
+// 		address, ok := request["address"]
 
-		// Create a new tank object with the updated location
-		tank := Tank{
-			ID:   tankID,
-			Meta: TankMeta{Location: location},
-		}
+// 		if !ok {
+// 			fmt.Println("Invalid longitude value")
+// 			w.WriteHeader(http.StatusBadRequest)
+// 			return
+// 		}
 
-		// Marshal the tank object into JSON
-		tankData, err := json.Marshal(tank)
-		if err != nil {
-			fmt.Println("Error marshaling tank:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Create a new location object
+// 		location := Location{
+// 			Cordinates: ,
+// 		}
 
-		// Create a new HTTP client
-		client := http.Client{}
+// 		// Create a new tank object with the updated location
+// 		tank := Tank{
+// 			ID:   tankID,
+// 			Meta: TankMeta{Location: location},
+// 		}
 
-		// Send a POST request to localhost/devices/tankID
-		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/meta", tankID), bytes.NewBuffer(tankData))
-		if err != nil {
-			fmt.Println("Error creating request:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+// 		// Marshal the tank object into JSON
+// 		tankData, err := json.Marshal(tank)
+// 		if err != nil {
+// 			fmt.Println("Error marshaling tank:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Set the Content-Type header to specify JSON request body
-		req.Header.Set("Content-Type", "application/json")
+// 		// Create a new HTTP client
+// 		client := http.Client{}
 
-		// Send the request
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Println("Error updating tank location:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		defer resp.Body.Close()
+// 		// Send a POST request to localhost/devices/tankID
+// 		req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/meta", tankID), bytes.NewBuffer(tankData))
+// 		if err != nil {
+// 			fmt.Println("Error creating request:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
 
-		// Check the response status code
-		if resp.StatusCode != http.StatusOK {
-			fmt.Println("Error updating tank location:", resp.Status)
-			w.WriteHeader(resp.StatusCode)
-			return
-		}
+// 		// Set the Content-Type header to specify JSON request body
+// 		req.Header.Set("Content-Type", "application/json")
 
-		// Set the Content-Type header to application/json
-		w.Header().Set("Content-Type", "application/json")
+// 		// Send the request
+// 		resp, err := client.Do(req)
+// 		if err != nil {
+// 			fmt.Println("Error updating tank location:", err)
+// 			w.WriteHeader(http.StatusInternalServerError)
+// 			return
+// 		}
+// 		defer resp.Body.Close()
 
-		// Write the success response to the response writer
-		w.Write([]byte(`{"message": "Location updated successfully"}`))
-	} else {
-		// Invalid HTTP method
-		w.WriteHeader(http.StatusMethodNotAllowed)
-	}
-}
+// 		// Check the response status code
+// 		if resp.StatusCode != http.StatusOK {
+// 			fmt.Println("Error updating tank location:", resp.Status)
+// 			w.WriteHeader(resp.StatusCode)
+// 			return
+// 		}
+
+// 		// Set the Content-Type header to application/json
+// 		w.Header().Set("Content-Type", "application/json")
+
+// 		// Write the success response to the response writer
+// 		w.Write([]byte(`{"message": "Location updated successfully"}`))
+// 	} else {
+// 		// Invalid HTTP method
+// 		w.WriteHeader(http.StatusMethodNotAllowed)
+// 	}
+// }
 
 type SensorHistory struct {
 	WaterLevel       []ValueData `json:"waterLevel"`
@@ -952,7 +960,7 @@ func postMetaField(w http.ResponseWriter, r *http.Request) {
 
 	// Write a success response
 	response := map[string]string{
-		"message": "Meta field updated successfully",
+		"message": "Tank profile updated successfully",
 	}
 	responseBytes, err := json.Marshal(response)
 	if err != nil {

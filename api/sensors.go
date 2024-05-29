@@ -235,8 +235,9 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if a water level sensor was found
 	if waterLevelSensor.ID == "" {
 		fmt.Println("Water level sensor not found")
-		w.WriteHeader(http.StatusNotFound)
-		return
+		// var values []SensorData
+		// w.WriteHeader(http.StatusNotFound)
+		// return
 	}
 
 	// Send a GET request to localhost/devices/tankID/sensors/waterlevel/values

@@ -12,6 +12,13 @@ func ApiServe(r *mux.Router) {
 	// Enable CORS middleware for all endpoints
 	r.HandleFunc("/{path:.*}", handleOptions).Methods("OPTIONS")
 
+	// Gateway profile
+	r.HandleFunc("/gateway-profile", handleCORS(getGatewayProfile)).Methods("GET")
+	r.HandleFunc("/gateway-profile", handleCORS(updateGatewayProfile)).Methods("POST")	
+
+	// Internet & services
+	// r.HandleFunc("/internet", handleCORS(getWifiStatus)).Methods("GET")
+
 	// Ask majiup copilot
 	// r.HandleFunc("/ask-majiup-copilot", handleCORS(AskMajiupCopilot)).Methods("POST")
 
