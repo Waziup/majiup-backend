@@ -118,9 +118,6 @@ func getGatewayProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Log the raw response body for debugging
-	log.Printf("Raw response body: %s", string(body))
-
 	var gateway Gateway
 	err = json.Unmarshal(body, &gateway)
 	if err != nil {
