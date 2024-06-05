@@ -11,7 +11,7 @@ RUN go build -o majiup .
 FROM node:18.13.0-alpine3.16 AS frontend-build
 WORKDIR /app
 COPY majiup-waziapp/package.json  ./
-RUN npm install --force
+RUN npm install --legacy-peer-deps
 COPY majiup-waziapp/. .
 RUN npm run build
 
