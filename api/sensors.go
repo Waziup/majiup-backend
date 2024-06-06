@@ -150,6 +150,7 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Calculate the amount of water in liters
 	tankHeight := targetTank.Meta.Settings.Height
+	tankOffset := targetTank.Meta.Settings.Offset
 	tankCapacity := targetTank.Meta.Settings.Capacity
 	sensorValue := waterLevelValue.(float64)
 
@@ -157,7 +158,7 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 
 	if tankCapacity > 0 && tankHeight > 0 {
 
-		calculatedValue := ((tankHeight - sensorValue) / tankHeight) * tankCapacity
+		calculatedValue := ((tankHeight - (sensorValue - tankOffset)) / tankHeight) * tankCapacity
 		liters = int(math.Round(calculatedValue))
 
 	}
@@ -317,7 +318,7 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		timestamp = value.Time
 		liters := 0
 		if targetTank.Meta.Settings.Height > 0 && targetTank.Meta.Settings.Capacity > 0 {
-			calculatedValue := ((targetTank.Meta.Settings.Height - sensorValue.(float64)) / targetTank.Meta.Settings.Height) * targetTank.Meta.Settings.Capacity
+			calculatedValue := ((targetTank.Meta.Settings.Height - (sensorValue.(float64) - targetTank.Meta.Settings.Offset)) / targetTank.Meta.Settings.Height) * targetTank.Meta.Settings.Capacity
 			liters = int(math.Round(calculatedValue))
 		}
 

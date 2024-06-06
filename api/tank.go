@@ -89,6 +89,7 @@ type Profile struct {
 
 type Settings struct {
 	Height   float64 `json:"height" bson:"height"`
+	Offset   float64 `json:"offset" bson:"offset"`
 	Capacity float64 `json:"capacity" bson:"capacity"`
 }
 
@@ -279,12 +280,13 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 
 		tankHeight := tank.Meta.Settings.Height
 		tankCapacity := tank.Meta.Settings.Capacity
+		tankOffset := tank.Meta.Settings.Offset
 
 		for _, sensor := range tank.Sensors {
 
 			// Check if the sensor kind is "WaterLevel"
 			if sensor.Meta.Kind == "WaterLevel" && tankHeight > 0 && tankCapacity > 0 {
-				waterLevelValue := ((tankHeight - sensor.Value.(float64)) / tankHeight) * tankCapacity
+				waterLevelValue := (((tankHeight) - (sensor.Value.(float64)-tankOffset)) / tankHeight) * tankCapacity
 				sensor.Value = int(waterLevelValue)
 			}
 
