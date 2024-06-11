@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"net/http"
 	"time"
 
@@ -20,7 +19,7 @@ type ValueData struct {
 }
 
 type WaterLevel struct {
-	Level     int        `json:"liters"`
+	Level     float64        `json:"liters"`
 	Timestamp *time.Time `json:"timestamp"`
 }
 
@@ -154,12 +153,12 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 	tankCapacity := targetTank.Meta.Settings.Capacity
 	sensorValue := waterLevelValue.(float64)
 
-	liters := 0
+	liters := 0.0
 
 	if tankCapacity > 0 && tankHeight > 0 {
 
 		calculatedValue := ((tankHeight - (sensorValue - tankOffset)) / tankHeight) * tankCapacity
-		liters = int(math.Round(calculatedValue))
+		liters = float64(calculatedValue)
 
 	}
 
@@ -316,10 +315,10 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		sensorValue := value.Value
 
 		timestamp = value.Time
-		liters := 0
+		liters := 0.0
 		if targetTank.Meta.Settings.Height > 0 && targetTank.Meta.Settings.Capacity > 0 {
 			calculatedValue := ((targetTank.Meta.Settings.Height - (sensorValue.(float64) - targetTank.Meta.Settings.Offset)) / targetTank.Meta.Settings.Height) * targetTank.Meta.Settings.Capacity
-			liters = int(math.Round(calculatedValue))
+			liters = (calculatedValue)
 		}
 
 		entry := WaterLevel{
@@ -342,6 +341,8 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")

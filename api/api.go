@@ -16,6 +16,9 @@ func ApiServe(r *mux.Router) {
 	r.HandleFunc("/gateway-profile", handleCORS(getGatewayProfile)).Methods("GET")
 	r.HandleFunc("/gateway-profile", handleCORS(updateGatewayProfile)).Methods("POST")	
 
+	// Get analytics
+	r.HandleFunc("/tanks/{tankID}/analytics", handleCORS(getAnalytics)).Methods("GET")
+
 	// Internet & services
 	// r.HandleFunc("/internet", handleCORS(getWifiStatus)).Methods("GET")
 

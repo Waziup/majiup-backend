@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"time"
 
@@ -227,6 +228,328 @@ type PumpMeta struct {
 
 // 	return nil
 // }
+
+// Get analytics
+// This function returns
+//  1. Daily average consumption
+//  2. Estimated consumption time
+//  3. Trend, either UP_TREND or DOWN_TREND in water levels
+
+type Consumption struct {
+	Quantity        float64  `json:"quantity" bson:"quantity"`
+	Duration        float64  `json:"durarion" bson:"duration"` 
+}
+
+type Trend struct {
+	Value			float64 `json:"value" bson:"value"`
+	AmountConsumed	float64 `json:"amountUsed" bson:"amountUsed"`
+	Duration 		float64	`json:"days" bson:"days"`
+	Indicator		string	`json:"indicator" bson:"indicator"`
+}
+
+type Average struct {
+	Hourly 		float64 `json:"hourly" bson:"hourly"`
+	Daily 		float64 `json:"daily" bson:"daily"`
+	
+}
+
+type Analytics struct {
+	Average 		Average `json:"average" bson:"average"`
+	Trend 			Trend	`json:"trend" bson:"trend"`
+	DurationLeft	int	`json:"durationLeft" bson:"durationLeft"`
+}
+
+func getConsumption(quantity []WaterLevel ) []Consumption {
+	if len(quantity) < 2 {
+		return nil
+	}
+
+	differences := make([]Consumption, len(quantity)-1)
+	
+	for i := 0; i < len(quantity)-1; i++ {
+		differences[i].Quantity = quantity[i+1].Level - quantity[i].Level
+		differences[i].Duration = timeDifference(quantity[i].Timestamp, quantity[i+1].Timestamp)
+	}
+
+	return differences
+}
+
+func timeDifference(timestamp1 *time.Time, timestamp2 *time.Time) float64 {
+	duration := timestamp2.Sub(*timestamp1)
+
+	return duration.Hours()
+}
+
+func getMovingAverage(data []WaterLevel, windowSize int) []WaterLevel {
+	if windowSize <= 0 {
+		return nil
+	}
+
+	var result []WaterLevel
+
+	result = make([]WaterLevel, len(data)-windowSize+1)
+
+	for i := 0; i <= len(data)-windowSize; i++ {
+		var sum float64
+		for j := 0; j < windowSize; j++ {
+			sum += data[i+j].Level
+		}
+		average := sum / float64(windowSize)
+
+		// duration := timeDifference(data[i].Timestamp, data[i+1].Timestamp)
+		result[i].Level = average
+		if i == 0 {
+			result[i].Timestamp = data[i].Timestamp
+		} else {
+			result[i].Timestamp = data[i+1].Timestamp
+		}
+	}
+	
+	return result
+}
+
+func getConsumptionAverage(consumption []Consumption, span string) float64 {
+	var sumQuantity float64
+	var sumDuration float64
+	for i := 0; i <= len(consumption) - 1; i++ {
+		if consumption[i].Quantity < 0 {
+			sumQuantity += math.Abs(consumption[i].Quantity)
+		}
+		sumDuration += consumption[i].Duration
+	}
+
+
+	avg := sumQuantity / sumDuration
+
+	if span == "hrs" {
+		return avg
+
+	} else if span == "mins" {
+		return avg / 60
+	} else if span == "days" {
+		return avg * 24
+	}
+	return avg
+}
+
+func getTrend(consumption []Consumption) Trend {
+	var sumQuantity float64
+	var amount float64
+	var trend Trend
+	var duration float64
+
+	for i := 0; i <= len(consumption) - 1; i++ {
+		sumQuantity += consumption[i].Quantity	
+		duration += consumption[i].Duration
+
+		if consumption[i].Quantity < 0 {
+			amount += math.Abs(consumption[i].Quantity)
+		}	
+	}
+
+	trend.AmountConsumed = amount
+	trend.Value = sumQuantity
+	trend.Duration = duration / 24
+	if sumQuantity < 0 {
+		trend.Indicator = "DOWN"
+	} else if sumQuantity > 0 {
+		trend.Indicator = "UP"
+	} else if sumQuantity == 0 {
+		trend.Indicator = "NEUTRAL"
+	} 
+
+
+	return trend
+
+}
+
+func getDurationLeft(consumption []Consumption, currentAmount  float64, ) int {
+	avg := getConsumptionAverage(consumption, "hours")
+
+	hoursLeft := int(currentAmount / avg)
+	daysLeft := int(hoursLeft / 24)
+	
+	return daysLeft
+}
+
+func getAnalytics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	tankID := vars["tankID"]
+
+	// Send a GET request to localhost/devices/tankID/sensors
+	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
+	if err != nil {
+		fmt.Println("Error retrieving sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	sensorBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading sensor response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the sensor data into a slice of SensorData
+	var sensors []SensorData
+	err = json.Unmarshal(sensorBody, &sensors)
+	if err != nil {
+		fmt.Println("Error unmarshaling sensors:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the water level sensor based on the sensor kind in the meta field
+	var waterLevelSensor SensorData
+	for _, sensor := range sensors {
+		if sensor.Meta.Kind == "WaterLevel" {
+			waterLevelSensor = sensor
+			break
+		}
+	}
+
+	// Check if a water level sensor was found
+	if waterLevelSensor.ID == "" {
+		fmt.Println("Water level sensor not found")
+		// var values []SensorData
+		// w.WriteHeader(http.StatusNotFound)
+		// return
+	}
+
+	// Send a GET request to localhost/devices/tankID/sensors/waterlevel/values
+	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+	if err != nil {
+		fmt.Println("Error retrieving water level values:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	valuesBody, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		fmt.Println("Error reading values response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the values data into a slice of ValueData
+	var values []SensorData
+	err = json.Unmarshal(valuesBody, &values)
+
+	if err != nil {
+		fmt.Println("Error unmarshaling values:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Send a GET request to localhost/devices
+	resp2, err := http.Get("http://localhost/devices")
+	if err != nil {
+		fmt.Println("Error requesting devices:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	defer resp2.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp2.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Unmarshal the JSON data into a slice of Tank
+	var tanks []Tank
+	err = json.Unmarshal(body, &tanks)
+	if err != nil {
+		fmt.Println("Error unmarshaling tanks:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Find the tank with the specified ID
+	var targetTank Tank
+	for _, tank := range tanks {
+		if tank.ID == tankID {
+			targetTank = tank
+			break
+		}
+	}
+
+	// Check if tank information is available
+	if targetTank.ID == "" {
+		fmt.Println("Tank information not found")
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var waterLevelEntries []WaterLevel
+	var timestamp *time.Time
+	for _, value := range values {
+		sensorValue := value.Value
+
+		timestamp = value.Time
+		liters := 0.0
+		if targetTank.Meta.Settings.Height > 0 && targetTank.Meta.Settings.Capacity > 0 {
+			calculatedValue := ((targetTank.Meta.Settings.Height - (sensorValue.(float64) - targetTank.Meta.Settings.Offset)) / targetTank.Meta.Settings.Height) * targetTank.Meta.Settings.Capacity
+			liters = float64(calculatedValue)
+		}
+
+		entry := WaterLevel{
+			Level:     liters,
+			Timestamp: timestamp,
+		}
+		waterLevelEntries = append(waterLevelEntries, entry)
+	}
+
+	
+	movingAverage := getMovingAverage(waterLevelEntries, 2)
+	consumption := getConsumption(movingAverage)
+
+	averageConsumptionDaily := getConsumptionAverage(consumption,  "days")
+	averageConsumptionHourly := getConsumptionAverage(consumption,  "hrs")
+
+	trend := getTrend(consumption)
+	durationLeft := getDurationLeft(consumption, waterLevelEntries[len(waterLevelEntries)-1].Level)	
+
+	var analytics Analytics
+	if len(consumption) > 2 {
+		analytics.Trend = trend
+		analytics.Average.Daily = averageConsumptionDaily
+		analytics.Average.Hourly = averageConsumptionHourly
+		analytics.DurationLeft  =  durationLeft
+	}
+
+	// responseJSON := struct {
+	// 	WaterLevels []WaterLevel `json:"waterLevels"`
+	// }{
+	// 	WaterLevels: waterLevelEntries,
+	// }
+
+	// Marshal the response object into JSON
+	responseJSONBytes, err := json.Marshal(analytics)
+	if err != nil {
+		fmt.Println("Error marshaling response:", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Set the Content-Type header to application/json
+	w.Header().Set("Content-Type", "application/json")
+
+	log.Printf("[%s] Water quantity history fetched: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+
+	// Write the JSON response to the response writer
+	w.Write(responseJSONBytes)
+
+}
 
 // TankHandler handles requests to the /tanks endpoint
 func TankHandler(w http.ResponseWriter, r *http.Request) {
