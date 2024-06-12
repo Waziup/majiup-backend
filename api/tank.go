@@ -8,6 +8,8 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -372,6 +374,41 @@ func getDurationLeft(consumption []Consumption, currentAmount  float64, ) int {
 	return daysLeft
 }
 
+type FromTo struct {
+	From 		string `json:"from" bson:"from"`
+	To 			string `json:"to" bson:"to"`
+}
+
+func getFromTo(hours time.Duration) FromTo {
+
+	var gap FromTo
+
+	loc, err := time.LoadLocation("Africa/Nairobi") // This location is in EAT timezone (UTC+03:00)
+
+	if err != nil {
+		fmt.Println("Error loading location:", err)
+		return gap
+	}
+
+	
+	// Current time in the specified timezone
+	now := time.Now().In(loc)
+	fmt.Println(now)
+
+	// Time 48 hours ago in the specified timezone
+	fortyEightHoursAgo := now.Add(-hours * time.Hour)
+
+
+	// Format time in the specified format
+	from := fortyEightHoursAgo.Format(time.RFC3339)
+	to := now.Format(time.RFC3339)
+
+	gap.From = from
+	gap.To = to
+
+	return gap
+}
+
 func getAnalytics(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -420,28 +457,66 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 		// return
 	}
 
-	// Send a GET request to localhost/devices/tankID/sensors/waterlevel/values
-	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+	baseURL := "http://localhost/devices/%s/sensors/%s/values"
+	formattedURL := fmt.Sprintf(baseURL, tankID, waterLevelSensor.ID)
+
+	// Parse the URL
+	u, err := url.Parse(formattedURL)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+		return
+	}
+	
+	from := strings.ReplaceAll(r.URL.Query().Get("from"), " ", "+")
+	to := strings.ReplaceAll(r.URL.Query().Get("to"), " ", "+")
+
+	q := u.Query()
+	q.Set("from", from)
+	q.Set("to", to)
+	
+	// q.Set("limit", "10")
+	u.RawQuery = q.Encode()
+
+	// Perform the GET request
+	resp, err = http.Get(u.String())
+
+	// resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+
 	if err != nil {
 		fmt.Println("Error retrieving water level values:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	defer resp.Body.Close()
+
+	// Check response status code
+	if resp.StatusCode != http.StatusOK {
+		fmt.Println("Unexpected status code:", resp.StatusCode)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// Check Content-Type
+	contentType := resp.Header.Get("Content-Type")
+	if contentType != "application/json" {
+		fmt.Println("Unexpected content type:", contentType)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	// Read the response body
 	valuesBody, err := ioutil.ReadAll(resp.Body)
-
 	if err != nil {
 		fmt.Println("Error reading values response body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	
 
 	// Unmarshal the values data into a slice of ValueData
 	var values []SensorData
 	err = json.Unmarshal(valuesBody, &values)
-
 	if err != nil {
 		fmt.Println("Error unmarshaling values:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -455,7 +530,50 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	defer resp2.Body.Close()
+
+	if len(values) < 5 {
+		resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+		if err != nil {
+			fmt.Println("Error retrieving water level values:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	
+		defer resp.Body.Close()
+	
+		// Check response status code
+		if resp.StatusCode != http.StatusOK {
+			fmt.Println("Unexpected status code:", resp.StatusCode)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	
+		// Check Content-Type
+		contentType := resp.Header.Get("Content-Type")
+		if contentType != "application/json" {
+			fmt.Println("Unexpected content type:", contentType)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	
+		// Read the response body
+		valuesBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading values response body:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		
+		// Unmarshal the values data into a slice of ValueData
+		err = json.Unmarshal(valuesBody, &values)
+		if err != nil {
+			fmt.Println("Error unmarshaling values:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
 
 	// Read the response body
 	body, err := ioutil.ReadAll(resp2.Body)
@@ -544,7 +662,7 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
-	log.Printf("[%s] Water quantity history fetched: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+	log.Printf("[%s] Water analytics: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(responseJSONBytes)
@@ -1147,7 +1265,7 @@ func getSensorHistory(tankID, sensorKind string) ([]ValueData, error) {
 	}
 
 	// Send a GET request to localhost/devices/tankID/sensors/sensorID/values
-	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, targetSensor.ID))
+	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values?limit=3", tankID, targetSensor.ID))
 	if err != nil {
 		return nil, err
 	}

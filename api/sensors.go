@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -195,7 +197,7 @@ func GetWaterLevelValueHandler(w http.ResponseWriter, r *http.Request) {
 func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	tankID := vars["tankID"]
+	tankID := vars["tankID"]	
 
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors", tankID))
@@ -238,10 +240,33 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		// var values []SensorData
 		// w.WriteHeader(http.StatusNotFound)
 		// return
-	}
+	}	
 
 	// Send a GET request to localhost/devices/tankID/sensors/waterlevel/values
-	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+	// resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values?limit=5", tankID, waterLevelSensor.ID))
+
+	baseURL := "http://localhost/devices/%s/sensors/%s/values"
+	formattedURL := fmt.Sprintf(baseURL, tankID, waterLevelSensor.ID)
+
+	// Parse the URL
+	u, err := url.Parse(formattedURL)
+	if err != nil {
+		fmt.Println("Error parsing URL:", err)
+		return
+	}
+	
+	from := strings.ReplaceAll(r.URL.Query().Get("from"), " ", "+")
+	to := strings.ReplaceAll(r.URL.Query().Get("to"), " ", "+")
+
+	q := u.Query()
+	q.Set("from", from)
+	q.Set("to", to)
+	
+	// q.Set("limit", "10")
+	u.RawQuery = q.Encode()
+
+	// Perform the GET request
+	resp, err = http.Get(u.String())
 	if err != nil {
 		fmt.Println("Error retrieving water level values:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -261,6 +286,49 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Unmarshal the values data into a slice of ValueData
 	var values []SensorData
 	err = json.Unmarshal(valuesBody, &values)
+
+	if len(values) < 5 {
+		resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+		if err != nil {
+			fmt.Println("Error retrieving water level values:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	
+		defer resp.Body.Close()
+	
+		// Check response status code
+		if resp.StatusCode != http.StatusOK {
+			fmt.Println("Unexpected status code:", resp.StatusCode)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	
+		// Check Content-Type
+		contentType := resp.Header.Get("Content-Type")
+		if contentType != "application/json" {
+			fmt.Println("Unexpected content type:", contentType)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	
+		// Read the response body
+		valuesBody, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error reading values response body:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		
+		// Unmarshal the values data into a slice of ValueData
+		err = json.Unmarshal(valuesBody, &values)
+		if err != nil {
+			fmt.Println("Error unmarshaling values:", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+	}
+
 
 	if err != nil {
 		fmt.Println("Error unmarshaling values:", err)
