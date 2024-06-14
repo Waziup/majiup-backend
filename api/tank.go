@@ -286,10 +286,8 @@ func getMovingAverage(data []WaterLevel, windowSize int) []WaterLevel {
 	if windowSize <= 0 {
 		return nil
 	}
-
-	var result []WaterLevel
-
-	result = make([]WaterLevel, len(data)-windowSize+1)
+	result := make([]WaterLevel, len(data)-windowSize+1)
+	
 
 	for i := 0; i <= len(data)-windowSize; i++ {
 		var sum float64
@@ -474,7 +472,6 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 	q.Set("from", from)
 	q.Set("to", to)
 	
-	// q.Set("limit", "10")
 	u.RawQuery = q.Encode()
 
 	// Perform the GET request
@@ -482,6 +479,7 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 
 	// resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
 
+	fmt.Println()
 	if err != nil {
 		fmt.Println("Error retrieving water level values:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -532,7 +530,7 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer resp2.Body.Close()
-
+	
 	if len(values) < 5 {
 		resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
 		if err != nil {
@@ -626,7 +624,6 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 		}
 		waterLevelEntries = append(waterLevelEntries, entry)
 	}
-
 	
 	movingAverage := getMovingAverage(waterLevelEntries, 2)
 	consumption := getConsumption(movingAverage)
@@ -638,6 +635,7 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 	durationLeft := getDurationLeft(consumption, waterLevelEntries[len(waterLevelEntries)-1].Level)	
 
 	var analytics Analytics
+
 	if len(consumption) > 2 {
 		analytics.Trend = trend
 		analytics.Average.Daily = averageConsumptionDaily
@@ -1289,7 +1287,7 @@ func getSensorHistory(tankID, sensorKind string) ([]ValueData, error) {
 		values[i].Timestamp = targetSensor.Time
 	}
 
-	log.Printf("[%s] Tank sensor histoey:", time.Now().Format(time.RFC3339))
+	log.Printf("[%s] Tank sensor history:", time.Now().Format(time.RFC3339))
 
 	return values, nil
 }

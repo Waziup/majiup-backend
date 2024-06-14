@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -262,7 +263,6 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	q.Set("from", from)
 	q.Set("to", to)
 	
-	// q.Set("limit", "10")
 	u.RawQuery = q.Encode()
 
 	// Perform the GET request
@@ -275,7 +275,7 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	// Read the response body
-	valuesBody, err := ioutil.ReadAll(resp.Body)
+	valuesBody, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		fmt.Println("Error reading values response body:", err)
@@ -288,6 +288,7 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(valuesBody, &values)
 
 	if len(values) < 5 {
+		fmt.Println("LESS VALS")
 		resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
 		if err != nil {
 			fmt.Println("Error retrieving water level values:", err)
@@ -328,7 +329,6 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
 
 	if err != nil {
 		fmt.Println("Error unmarshaling values:", err)

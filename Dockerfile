@@ -10,9 +10,14 @@ RUN go build -o majiup .
 # Stage 2: build front-end
 FROM node:18.13.0-alpine3.16 AS frontend-build
 WORKDIR /app
-COPY majiup-waziapp/package.json  ./
+
+# Copy only package.json first and install dependencies
+COPY majiup-waziapp/package.json ./
 RUN npm install --legacy-peer-deps
-COPY majiup-waziapp/. .
+
+# Copy the rest of the frontend source code
+COPY majiup-waziapp/ ./
+
 RUN npm run build
 
 # Stage 3: Create the final runtime image
