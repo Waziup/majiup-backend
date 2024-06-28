@@ -1,4 +1,4 @@
-# Majiup
+# Majiup backend 
 
 ## Steps to run the Majiup
 
