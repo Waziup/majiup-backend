@@ -287,48 +287,48 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	var values []SensorData
 	err = json.Unmarshal(valuesBody, &values)
 
-	if len(values) < 5 {
-		fmt.Println("LESS VALS")
-		resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
-		if err != nil {
-			fmt.Println("Error retrieving water level values:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	// if len(values) < 5 {
+	// 	fmt.Println("LESS VALS")
+	// 	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+	// 	if err != nil {
+	// 		fmt.Println("Error retrieving water level values:", err)
+	// 		w.WriteHeader(http.StatusInternalServerError)
+	// 		return
+	// 	}
 	
-		defer resp.Body.Close()
+	// 	defer resp.Body.Close()
 	
-		// Check response status code
-		if resp.StatusCode != http.StatusOK {
-			fmt.Println("Unexpected status code:", resp.StatusCode)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	// 	// Check response status code
+	// 	if resp.StatusCode != http.StatusOK {
+	// 		fmt.Println("Unexpected status code:", resp.StatusCode)
+	// 		w.WriteHeader(http.StatusInternalServerError)
+	// 		return
+	// 	}
 	
-		// Check Content-Type
-		contentType := resp.Header.Get("Content-Type")
-		if contentType != "application/json" {
-			fmt.Println("Unexpected content type:", contentType)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	// 	// Check Content-Type
+	// 	contentType := resp.Header.Get("Content-Type")
+	// 	if contentType != "application/json" {
+	// 		fmt.Println("Unexpected content type:", contentType)
+	// 		w.WriteHeader(http.StatusInternalServerError)
+	// 		return
+	// 	}
 	
-		// Read the response body
-		valuesBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading values response body:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	// 	// Read the response body
+	// 	valuesBody, err := ioutil.ReadAll(resp.Body)
+	// 	if err != nil {
+	// 		fmt.Println("Error reading values response body:", err)
+	// 		w.WriteHeader(http.StatusInternalServerError)
+	// 		return
+	// 	}
 		
-		// Unmarshal the values data into a slice of ValueData
-		err = json.Unmarshal(valuesBody, &values)
-		if err != nil {
-			fmt.Println("Error unmarshaling values:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	}
+	// 	// Unmarshal the values data into a slice of ValueData
+	// 	err = json.Unmarshal(valuesBody, &values)
+	// 	if err != nil {
+	// 		fmt.Println("Error unmarshaling values:", err)
+	// 		w.WriteHeader(http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// }
 
 	if err != nil {
 		fmt.Println("Error unmarshaling values:", err)

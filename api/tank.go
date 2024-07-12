@@ -23,7 +23,7 @@ type Tank struct {
 	Pumps    []PumpData   `json:"actuators"`
 	Meta     TankMeta     `json:"meta" bson:"meta"`
 	Modified time.Time    `json:"modified" bson:"modified"`
-	Created  time.Time    `json:"created" bson:"created"`
+	Created  time.Time    `json:"created" bson:"created"`	
 }
 
 type TankMeta struct {
@@ -64,11 +64,12 @@ type Notification struct {
 }
 
 type Message struct {
-	ID       int    `json:"id" bson:"id"`
-	TankName string `json:"tank_name" bson:"tank_name"`
-	Date     string `json:"time" bson:"time"`
-	Priority string `json:"priority" bson:"priority"`
-	Message  string `json:"message"`
+	ID       	int    		`json:"id" bson:"id"`
+	TankName 	string 		`json:"tank_name" bson:"tank_name"`
+	Date     	string 		`json:"time" bson:"time"`
+	Priority 	string 		`json:"priority" bson:"priority"`
+	Message  	string 		`json:"message"`
+	Read  		bool 		`json:"read_status"`
 }
 
 type Location struct {
@@ -530,47 +531,50 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer resp2.Body.Close()
+
+	// fmt.Println(values)
 	
-	if len(values) < 5 {
-		resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
-		if err != nil {
-			fmt.Println("Error retrieving water level values:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	
-		defer resp.Body.Close()
-	
-		// Check response status code
-		if resp.StatusCode != http.StatusOK {
-			fmt.Println("Unexpected status code:", resp.StatusCode)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	
-		// Check Content-Type
-		contentType := resp.Header.Get("Content-Type")
-		if contentType != "application/json" {
-			fmt.Println("Unexpected content type:", contentType)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-	
-		// Read the response body
-		valuesBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error reading values response body:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+	if len(values) < 2 {
 		
-		// Unmarshal the values data into a slice of ValueData
-		err = json.Unmarshal(valuesBody, &values)
-		if err != nil {
-			fmt.Println("Error unmarshaling values:", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
+		// resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s/values", tankID, waterLevelSensor.ID))
+		// if err != nil {
+		// 	fmt.Println("Error retrieving water level values:", err)
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	return
+		// }
+	
+		// defer resp.Body.Close()
+	
+		// // Check response status code
+		// if resp.StatusCode != http.StatusOK {
+		// 	fmt.Println("Unexpected status code:", resp.StatusCode)
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	return
+		// }
+	
+		// // Check Content-Type
+		// contentType := resp.Header.Get("Content-Type")
+		// if contentType != "application/json" {
+		// 	fmt.Println("Unexpected content type:", contentType)
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	return
+		// }
+	
+		// // Read the response body
+		// valuesBody, err := ioutil.ReadAll(resp.Body)
+		// if err != nil {
+		// 	fmt.Println("Error reading values response body:", err)
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	return
+		// }
+		
+		// // Unmarshal the values data into a slice of ValueData
+		// err = json.Unmarshal(valuesBody, &values)
+		// if err != nil {
+		// 	fmt.Println("Error unmarshaling values:", err)
+		// 	w.WriteHeader(http.StatusInternalServerError)
+		// 	return
+		// }
 	}
 
 	// Read the response body
@@ -642,6 +646,7 @@ func getAnalytics(w http.ResponseWriter, r *http.Request) {
 		analytics.Average.Hourly = averageConsumptionHourly
 		analytics.DurationLeft  =  durationLeft
 	}
+
 
 	// responseJSON := struct {
 	// 	WaterLevels []WaterLevel `json:"waterLevels"`

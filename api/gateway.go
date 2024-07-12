@@ -12,6 +12,7 @@ import (
 
 type Gateway struct {
 	Profile		Profile `json:"profile" bson:"profile"`
+	Token		string `json:"token" bson:"token"`
 	// Created 	string	`json:"created" bson:"created"`
 	// Id			string 	`json:"id" bson:"id"`
 	// Name		string 	`json:"name" bson:"name"`
@@ -21,69 +22,73 @@ type  GatewayWifi struct {
 	Status	bool `json:"status" bson:"status"`
 }
 
-// func getWifiStatus(w http.ResponseWriter, r *http.Request) {
-// 	client := &http.Client{}
-// 	req, err := http.NewRequest("GET", "http://wazigate.local/apps/waziup.wazigate-system/internet", nil)
-// 	if err != nil {
-// 		log.Println("Error creating HTTP request:", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return
-// 	}
+type PushMessage struct {
+    To    string `json:"to"`
+    Title string `json:"title"`
+    Body  string `json:"body"`
+}
 
-// 	// Set the Content-Type and Accept headers
-// 	req.Header.Set("Content-Type", "application/json")
-// 	req.Header.Set("Accept", "application/json")
+func sendPushNotification(expoPushToken string, title string,  body string) error {
+	message := map[string]interface{}{
+		"to":    expoPushToken,
+		"sound": "default",
+		"title": title,
+		"body":  body,
+		"data":  map[string]string{"someData": "goes here"},
+	}
 
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		log.Println("Error obtaining gateway internet:", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return
-// 	}
-// 	defer resp.Body.Close()
+	messageBytes, err := json.Marshal(message)
+	if err != nil {
+		return err
+	}
 
-// 	// Check the HTTP response status code
-// 	if resp.StatusCode != http.StatusOK {
-// 		body, _ := ioutil.ReadAll(resp.Body)
-// 		log.Printf("Error: received non-200 status code %d. Response: %s", resp.StatusCode, string(body))
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return
-// 	}
+	req, err := http.NewRequest("POST", "https://exp.host/--/api/v2/push/send", bytes.NewBuffer(messageBytes))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Accept-Encoding", "gzip, deflate")
 
-// 	// Read the response body
-// 	body, err := ioutil.ReadAll(resp.Body)
-// 	if err != nil {
-// 		log.Println("Error reading response body:", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return
-// 	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
 
-// 	var status bool
-// 	err = json.Unmarshal(body, &status)
-// 	if err != nil {
-// 		log.Println("Error unmarshaling gateway:", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return
-// 	}
+	return nil
+}
 
-// 	// Marshal the gateway struct into JSON
-// 	response, err := json.Marshal(status)
-// 	if err != nil {
-// 		log.Println("Error marshaling gateway:", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return
-// 	}
+func handleSendNotification(w http.ResponseWriter, r *http.Request) {
+    // Parse request to get the recipient token, title, and body
+    var reqData struct {
+        Token string `json:"token"`
+        Title string `json:"title"`
+        Body  string `json:"body"`
+    }
+    err := json.NewDecoder(r.Body).Decode(&reqData)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
 
-// 	// Set the Content-Type header to application/json
-// 	w.Header().Set("Content-Type", "application/json")
+	// token := "ExponentPushToken[3lPx9RBzkdzrtopjtCiTbq]"
+	
 
-// 	// Log the success message
-// 	log.Printf("[%s] Fetched internet status %s: %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+    err = sendPushNotification(reqData.Token, reqData.Title, reqData.Body)
+    if err != nil {
+        http.Error(w, err.Error(), http.StatusInternalServerError)
+        return
+    }
 
-// 	// Write the JSON response to the response writer
-// 	w.Write(response)	
-// }
+    w.WriteHeader(http.StatusOK)
+    w.Write([]byte("Notification sent successfully"))
+}
 
 
 
