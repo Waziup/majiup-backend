@@ -1,32 +1,23 @@
-# Stage 1: Compile go app
-FROM golang:1.16-alpine AS backend-build
-WORKDIR /app
+# Stage 1: Build the executable
+FROM golang:1.17 AS builder
 
-COPY go.mod go.sum ./
-RUN go mod download
+WORKDIR /go/src/app
+
 COPY . .
-RUN go build -o majiup .
 
-# Stage 2: build front-end
-FROM node:18.13.0-alpine3.16 AS frontend-build
-WORKDIR /app
+# Build the Go app
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-# Copy only package.json first and install dependencies
-COPY majiup-waziapp/package.json ./
-RUN npm install --legacy-peer-deps
+# Stage 2: Create a minimal image to run the executable
+FROM scratch
 
-# Copy the rest of the frontend source code
-COPY majiup-waziapp/ ./
+WORKDIR /root/
 
-RUN npm run build
+# Copy the binary built in Stage 1
+COPY --from=builder /go/src/app/main .
 
-# Stage 3: Create the final runtime image
-FROM alpine:latest
-WORKDIR /root/app
+# Expose the port on which the Go application will run (if needed)
+EXPOSE 8082
 
-COPY --from=backend-build /app/majiup ./
-COPY --from=frontend-build /app/dist/ ./serve/
-
-EXPOSE 8081
-
-CMD ["./majiup"]
+# Command to run the executable
+CMD ["./main"]
