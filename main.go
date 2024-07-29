@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -84,7 +85,7 @@ type Gateway struct {
 }
 
 
-func sendPushNotification(expoPushToken string, title string,  body string) error {
+func sendPushNotification(expoPushToken string, title string, body string) error {
 	message := map[string]interface{}{
 		"to":    expoPushToken,
 		"sound": "default",
@@ -95,32 +96,41 @@ func sendPushNotification(expoPushToken string, title string,  body string) erro
 
 	messageBytes, err := json.Marshal(message)
 	if err != nil {
+		log.Printf("Error marshalling message: %v", err)
 		return err
 	}
 
 	req, err := http.NewRequest("POST", "https://exp.host/--/api/v2/push/send", bytes.NewBuffer(messageBytes))
 	if err != nil {
+		log.Printf("Error creating request: %v", err)
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Accept-Encoding", "gzip, deflate")
 
-	client := &http.Client{}
+	// Create a custom HTTP client with a transport that skips certificate verification
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+
+	client := &http.Client{Transport: tr}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("Error sending request: %v", err)
 		return err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("Unexpected status code: %d", resp.StatusCode)
 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	return nil
 }
-
-
 func getToken () string {
 	client := &http.Client{}
 
@@ -171,7 +181,7 @@ var notified bool = false;
 // var lastNotificationTime time.Time = time.Now();
 
 // var notificationSent bool = false;
-var prevValue float64 = 0.0
+// var prevValue float64 = 0.0
 
 func checkValForNotifcation (val float64, tankID string, sensorId string) {
 
@@ -251,20 +261,22 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 
 	token := getToken()
 
-	var difference float64 = percentage - prevValue;
+	// var difference float64 = percentage - prevValue;
 	
-	fmt.Println(difference)
-	fmt.Println(percentage)
-	fmt.Println(notified)
+	// fmt.Println("Difference: ",difference)
+	fmt.Println("Percentage: ",percentage)
+	fmt.Println("Notified: ",notified)
+	fmt.Println("EXPO TOKEN: ", token)
+	fmt.Println()
 
-	if percentage <= lowerLimit  && difference <= 0 && !notified  {
+	if percentage <= lowerLimit && !notified  {
 		fmt.Println("Sending LOW notification")
 		title := fmt.Sprintf("%s is almost empty", tank.Name)
 		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
 		sendPushNotification(token, title, body)
 		notified = true
 		return
-	} else if percentage >= upperLimit && difference >= 0 && !notified {
+	} else if percentage >= upperLimit && !notified {
 		fmt.Println("Sending HIGH notification")
 		title := fmt.Sprintf("%s is almost filled", tank.Name)
 		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
@@ -276,7 +288,7 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 		return
 	}
 	
-	prevValue = percentage;		
+	// prevValue = percentage;		
 }
 
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -326,6 +338,9 @@ func connectMqtt(broker string, topic string, port int) error {
 	opts.SetDefaultPublishHandler(messagePubHandler)
 	opts.OnConnect = connectHandler
 	opts.OnConnectionLost = connectLostHandler
+
+	fmt.Printf("mqtt://%s:%d\n", broker, port)
+
 
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
@@ -443,8 +458,8 @@ func main() {
 	fmt.Println(topics)
 
 	for _, topic := range topics {
-		// err := connectMqtt("wazigate.local", topic.TopicId, 1883)
 		err := connectMqtt("localhost", topic.TopicId, 1883)
+		// err := connectMqtt("wazigate.local", topic.TopicId, 1883)
 		if err != nil {
 			log.Printf("[ MQTT ] Failed to connect to MQTT: %v", err)
 			// You can choose to proceed without MQTT or handle this error as per your application's requirements.
