@@ -131,6 +131,7 @@ func sendPushNotification(expoPushToken string, title string, body string) error
 
 	return nil
 }
+
 func getToken () string {
 	client := &http.Client{}
 
@@ -178,6 +179,9 @@ func getToken () string {
 }
 
 var notified bool = false;
+
+var mqttClient mqtt.Client
+
 // var lastNotificationTime time.Time = time.Now();
 
 // var notificationSent bool = false;
@@ -342,12 +346,12 @@ func connectMqtt(broker string, topic string, port int) error {
 	fmt.Printf("mqtt://%s:%d\n", broker, port)
 
 
-	client := mqtt.NewClient(opts)
-	if token := client.Connect(); token.Wait() && token.Error() != nil {
+	mqttClient = mqtt.NewClient(opts)
+	if token := mqttClient.Connect(); token.Wait() && token.Error() != nil {
 		return fmt.Errorf("[ MQTT ] failed to connect to MQTT broker: %v", token.Error())
 	}
 
-	sub(client, topic)
+	sub(mqttClient, topic)
 
 	// Trap SIGINT (Ctrl+C) and SIGTERM (kill) to gracefully disconnect from MQTT broker
 	signals := make(chan os.Signal, 1)
@@ -355,7 +359,7 @@ func connectMqtt(broker string, topic string, port int) error {
 
 	go func() {
 		<-signals // Block until a signal is received
-		client.Disconnect(250)
+		mqttClient.Disconnect(250)
 		fmt.Println("\n [ MQTT ] Disconnected from MQTT broker")
 		os.Exit(0)
 	}()
@@ -363,6 +367,22 @@ func connectMqtt(broker string, topic string, port int) error {
 	fmt.Println("[ MQTT ] Connected to MQTT broker")
 	return nil
 }
+
+func maintainMqttConnection(broker string, topic string, port int) {
+	for {
+		if mqttClient == nil || !mqttClient.IsConnected() {
+			fmt.Println("[ MQTT ] Reconnecting to MQTT broker...")
+			err := connectMqtt(broker, topic, port)
+			if err != nil {
+				fmt.Printf("[ MQTT ] Failed to reconnect to MQTT broker: %v\n", err)
+			} else {
+				fmt.Println("[ MQTT ] Reconnected to MQTT broker successfully")
+			}
+		}
+		time.Sleep(10 * time.Second)
+	}
+}
+
 
 type MqttTopic struct {
 	TopicId string `json:"topic" bson:"topic"`
@@ -457,14 +477,19 @@ func main() {
 
 	fmt.Println(topics)
 
+	// Start MQTT connection and maintain it in a separate goroutine
 	for _, topic := range topics {
-		err := connectMqtt("localhost", topic.TopicId, 1883)
-		// err := connectMqtt("wazigate.local", topic.TopicId, 1883)
-		if err != nil {
-			log.Printf("[ MQTT ] Failed to connect to MQTT: %v", err)
-			// You can choose to proceed without MQTT or handle this error as per your application's requirements.
-		}
+		go maintainMqttConnection("localhost", topic.TopicId, 1883)
 	}
+
+	// for _, topic := range topics {
+	// 	err := connectMqtt("localhost", topic.TopicId, 1883)
+	// 	// err := connectMqtt("wazigate.local", topic.TopicId, 1883)
+	// 	if err != nil {
+	// 		log.Printf("[ MQTT ] Failed to connect to MQTT: %v", err)
+	// 		// You can choose to proceed without MQTT or handle this error as per your application's requirements.
+	// 	}
+	// }
 
 	// Start HTTP server
 	err := http.ListenAndServe(":8082", mainRouter)
