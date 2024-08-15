@@ -66,6 +66,7 @@ type Settings struct {
 
 type TankMeta struct {
 	Settings            Settings     `json:"settings" bson:"settings"`
+	Notifications       Notification `json:"notifications" bson:"notifications"`
 }
 
 // Tank represents a tank with its properties
@@ -84,6 +85,9 @@ type Gateway struct {
 	Token		string `json:"token" bson:"token"`
 }
 
+func sendMessage(message string, phone string) {
+
+}
 
 func sendPushNotification(expoPushToken string, title string, body string) error {
 	message := map[string]interface{}{
@@ -180,12 +184,93 @@ func getToken () string {
 
 var notified bool = false;
 
+var criticalLevelNotified  bool = false;
+
+var tankFull int = 100;
+var tankEmpty int = 20;
+
 var mqttClient mqtt.Client
 
-// var lastNotificationTime time.Time = time.Now();
+type Notification struct {
+	Messages []Message `json:"messages" bson:"messages"`
+}
 
-// var notificationSent bool = false;
-// var prevValue float64 = 0.0
+type Message struct {
+	ID       	int    		`json:"id" bson:"id"`
+	TankName 	string 		`json:"tank_name" bson:"tank_name"`
+	Date     	string 		`json:"time" bson:"time"`
+	Priority 	string 		`json:"priority" bson:"priority"`
+	Message  	string 		`json:"message"`
+	Read  		bool 		`json:"read_status"`
+}
+
+func updateTankMessages(tankID string, newMessage Message) {
+	// Send a GET request to get the tank metadata
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s/meta", tankID), nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	client := http.DefaultClient
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return
+	}
+
+	var tankMeta TankMeta
+	err = json.Unmarshal(body, &tankMeta)
+	if err != nil {
+		fmt.Println("Error unmarshaling tank metadata:", err)
+		return
+	}
+
+	// Update the messages in the notifications struct
+	// tankMeta.Notifications.Messages = append(tankMeta.Notifications.Messages, newMessage)
+
+	tankMeta.Notifications.Messages = append([]Message{newMessage}, tankMeta.Notifications.Messages...)
+
+
+	// Marshal the updated struct to JSON
+	updatedBody, err := json.Marshal(tankMeta)
+	if err != nil {
+		fmt.Println("Error marshaling updated tank metadata:", err)
+		return
+	}
+
+	// Send a POST request to update the tank metadata
+	postReq, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost/devices/%s/meta", tankID), bytes.NewBuffer(updatedBody))
+	if err != nil {
+		fmt.Println("Error creating post request:", err)
+		return
+	}
+
+	postReq.Header.Set("Content-Type", "application/json")
+
+	postResp, err := client.Do(postReq)
+	if err != nil {
+		fmt.Println("Error sending post request:", err)
+		return
+	}
+	defer postResp.Body.Close()
+
+	if postResp.StatusCode == http.StatusOK {
+		fmt.Println("Tank metadata updated successfully with POST")
+	} else {
+		fmt.Println("Failed to update tank metadata with POST")
+	}
+}
 
 func checkValForNotifcation (val float64, tankID string, sensorId string) {
 
@@ -236,6 +321,8 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 
 	percentage := (liters/tankCapacity)*100
 
+	date := time.Now().Add(3*time.Hour).Format("2006-01-02 15:04:05")
+
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/sensors/%s", tankID, sensorId))
 	if err != nil {
@@ -267,17 +354,22 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 
 	// var difference float64 = percentage - prevValue;
 	
-	// fmt.Println("Difference: ",difference)
-	fmt.Println("Percentage: ",percentage)
-	fmt.Println("Notified: ",notified)
-	fmt.Println("EXPO TOKEN: ", token)
-	fmt.Println()
-
+	// sending alerts during max and min alerts 
 	if percentage <= lowerLimit && !notified  {
 		fmt.Println("Sending LOW notification")
 		title := fmt.Sprintf("%s is almost empty", tank.Name)
 		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
 		sendPushNotification(token, title, body)
+
+		message := Message{
+			TankName: 	tank.Name,
+			Message: 	body,
+			Date:    	date,
+		}
+		updateTankMessages(tank.ID, message)
+
+		// phone := string(0)
+		// sendMessage(body, phone)
 		notified = true
 		return
 	} else if percentage >= upperLimit && !notified {
@@ -285,6 +377,16 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 		title := fmt.Sprintf("%s is almost filled", tank.Name)
 		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
 		sendPushNotification(token, title, body)
+
+		message := Message{
+			TankName: tank.Name,
+			Message: body,
+			Date:    	date,
+		}
+		updateTankMessages(tank.ID, message)
+
+		// phone := string(0)
+		// sendMessage(body, phone)
 		notified = true
 		return
 	} else if (percentage > lowerLimit && percentage < upperLimit ) {
@@ -292,7 +394,46 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 		return
 	}
 	
-	// prevValue = percentage;		
+	// Send alerts at extreme levels
+	if percentage >= float64(tankFull) && !criticalLevelNotified  {
+		fmt.Println("Sending 100% notification")
+		title := fmt.Sprintf("%s is already full", tank.Name)
+		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
+		sendPushNotification(token, title, body)
+
+		message := Message{
+			TankName: tank.Name,
+			Message: body,
+			Date:    	date,
+		}
+		updateTankMessages(tank.ID, message)
+
+		// phone := string(0)
+		// sendMessage(body, phone)
+		criticalLevelNotified = true
+		return
+	} else if percentage <= float64(tankEmpty) && !criticalLevelNotified {
+		fmt.Println("Sending 20% notification")
+		title := fmt.Sprintf("%s is running dry", tank.Name)
+		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
+		sendPushNotification(token, title, body)
+
+		message := Message{
+			TankName: tank.Name,
+			Message: body,
+			Date:    	date,
+		}
+		updateTankMessages(tank.ID, message)
+
+		// phone := string(0)
+		// sendMessage(body, phone)
+		criticalLevelNotified = true
+		return
+	} else if (percentage > float64(tankEmpty) && percentage < float64(tankFull) ) {
+		criticalLevelNotified = false
+		return
+	}
+
 }
 
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
@@ -309,8 +450,6 @@ var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Me
 		fmt.Println("Error parsing float:", err)
 		return
 	}
-
-	fmt.Println("Received: ", floatVal)
 
 	if len(matches) >= 3 {
 		deviceID := matches[1]
