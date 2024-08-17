@@ -12,7 +12,7 @@ import (
 
 type Gateway struct {
 	Profile		Profile `json:"profile" bson:"profile"`
-	Token		string `json:"token" bson:"token"`
+	Token		[]string `json:"token" bson:"token"`
 	// Created 	string	`json:"created" bson:"created"`
 	// Id			string 	`json:"id" bson:"id"`
 	// Name		string 	`json:"name" bson:"name"`
@@ -93,69 +93,73 @@ func handleSendNotification(w http.ResponseWriter, r *http.Request) {
 
 
 func getGatewayProfile(w http.ResponseWriter, r *http.Request) {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", "http://localhost/device/meta", nil)
-	if err != nil {
-		log.Println("Error creating HTTP request:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    client := &http.Client{}
+    req, err := http.NewRequest("GET", "http://localhost/device/meta", nil)
+    if err != nil {
+        log.Println("Error creating HTTP request:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 
-	// Set the Content-Type and Accept headers
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
+    req.Header.Set("Content-Type", "application/json")
+    req.Header.Set("Accept", "application/json")
 
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Println("Error obtaining gateway profile:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
+    resp, err := client.Do(req)
+    if err != nil {
+        log.Println("Error obtaining gateway profile:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+    defer resp.Body.Close()
 
-	// Check the HTTP response status code
-	if resp.StatusCode != http.StatusOK {
-		body, _ := ioutil.ReadAll(resp.Body)
-		log.Printf("Error: received non-200 status code %d. Response: %s", resp.StatusCode, string(body))
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    if resp.StatusCode != http.StatusOK {
+        body, _ := ioutil.ReadAll(resp.Body)
+        log.Printf("Error: received non-200 status code %d. Response: %s", resp.StatusCode, string(body))
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 
-	// Read the response body
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("Error reading response body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    body, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        log.Println("Error reading response body:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 
-	var gateway Gateway
-	
-	err = json.Unmarshal(body, &gateway)
+    var gateway Gateway
 
-	if err != nil {
-		log.Println("Error unmarshaling gateway:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    // First attempt to unmarshal into the full struct
+    err = json.Unmarshal(body, &gateway)
+    if err != nil {
+        log.Println("Error unmarshaling gateway, trying as string:", err)
 
-	// Marshal the gateway struct into JSON
-	response, err := json.Marshal(gateway)
-	if err != nil {
-		log.Println("Error marshaling gateway:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+        // Try to handle the case where token is a single string
+        var temp struct {
+            Token string `json:"token"`
+        }
 
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
+        if err = json.Unmarshal(body, &temp); err != nil {
+            log.Println("Error unmarshaling as string:", err)
+            w.WriteHeader(http.StatusInternalServerError)
+            return
+        }
 
-	// Log the success message
-	log.Printf("[%s] Fetched gateway %s: %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+        // Convert single string to slice of strings
+        gateway.Token = []string{temp.Token}
+    }
 
-	// Write the JSON response to the response writer
-	w.Write(response)
+    response, err := json.Marshal(gateway)
+    if err != nil {
+        log.Println("Error marshaling gateway:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    log.Printf("[%s] Fetched gateway %s: %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+    w.Write(response)
 }
+
 
 func updateGatewayProfile(w http.ResponseWriter, r *http.Request) {
 

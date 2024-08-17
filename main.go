@@ -67,7 +67,18 @@ type Settings struct {
 type TankMeta struct {
 	Settings            Settings     `json:"settings" bson:"settings"`
 	Notifications       Notification `json:"notifications" bson:"notifications"`
+	Profile				Profile		 `json:"profile" bson:"profile"`
+
 }
+
+type Profile struct {
+	FirstName	string `json:"first_name" bson:"first_name"`
+	LastName	string `json:"last_name" bson:"last_name"`
+	Username	string `json:"username" bson:"username"`
+	Phone 		string `json:"phone" bson:"phone"`
+	Email 		string `json:"email" bson:"email"`
+	Address		string `json:"address" bson:"address"`
+} 
 
 // Tank represents a tank with its properties
 type Tank struct {
@@ -82,11 +93,66 @@ type Tank struct {
 }
 
 type Gateway struct {
-	Token		string `json:"token" bson:"token"`
+	Token		[]string `json:"token" bson:"token"`
 }
 
-func sendMessage(message string, phone string) {
+func sendMessage(message string, phone string) error {
+	// apiKey := os.Getenv("SMS_API_KEY")
+	// shortCode := os.Getenv("SMS_SHORTCODE")
+	// partnerID := os.Getenv("SMS_PARTNER_ID")
 
+	// fmt.Println("PHONE: ",phone)
+	// fmt.Println("APIKEY: ",apiKey)
+	// fmt.Println("CODE: ",shortCode)
+	// fmt.Println("PARTNER: ",partnerID)
+
+	// Prepare the payload
+	payload := map[string]string{
+		"apikey":    "5fb19e73763aa97a9fda1a7813dc6a3e",
+		"partnerID": "10411",
+		"message":   message,
+		"shortcode": "TextSMS",
+		"mobile":    phone,
+	}
+
+	// Marshal the payload to JSON
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		log.Printf("Error marshalling payload: %v", err)
+		return err
+	}
+
+	// Create a new HTTP request
+	req, err := http.NewRequest("POST", "https://sms.textsms.co.ke/api/services/sendsms/", bytes.NewBuffer(payloadBytes))
+	if err != nil {
+		log.Printf("Error creating request: %v", err)
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	// Create a custom HTTP client with a transport that skips certificate verification
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+	}
+	client := &http.Client{Transport: tr}
+
+	// Send the request
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Error sending request: %v", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Check if the request was successful
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Unexpected status code: %d", resp.StatusCode)
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	return nil
 }
 
 func sendPushNotification(expoPushToken string, title string, body string) error {
@@ -136,7 +202,52 @@ func sendPushNotification(expoPushToken string, title string, body string) error
 	return nil
 }
 
-func getToken () string {
+func getTokens() []string { // Adjust the return type to []string
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", "http://localhost/device/meta", nil)
+	if err != nil {
+		log.Println("Error creating HTTP request:", err)
+		return nil
+	}
+
+	// Set the Content-Type and Accept headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println("Error obtaining gateway profile:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	// Check the HTTP response status code
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		log.Printf("Error: received non-200 status code %d. Response: %s", resp.StatusCode, string(body))
+		return nil
+	}
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Error reading response body:", err)
+		return nil
+	}
+
+	var gateway Gateway
+
+	err = json.Unmarshal(body, &gateway)
+	if err != nil {
+		log.Println("Error unmarshaling gateway:", err)
+		return nil
+	}
+
+	return gateway.Token // Return the list of tokens
+}
+
+func getPhone() string {
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", "http://localhost/device/meta", nil)
@@ -170,18 +281,17 @@ func getToken () string {
 		return ""
 	}
 
-	var gateway Gateway
+	var tankMeta TankMeta
 	
-	err = json.Unmarshal(body, &gateway)
+	err = json.Unmarshal(body, &tankMeta)
 
 	if err != nil {
 		log.Println("Error unmarshaling gateway:", err)
 		return ""
 	}
 
-	return gateway.Token
+	return strings.TrimSpace(tankMeta.Profile.Phone)
 }
-
 var notified bool = false;
 
 var criticalLevelNotified  bool = false;
@@ -350,7 +460,8 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 	lowerLimit := sensor.Meta.CriticalMin
 	upperLimit := sensor.Meta.CriticalMax
 
-	token := getToken()
+	tokens := getTokens()
+	phone := getPhone()
 
 	// var difference float64 = percentage - prevValue;
 	
@@ -359,7 +470,9 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 		fmt.Println("Sending LOW notification")
 		title := fmt.Sprintf("%s is almost empty", tank.Name)
 		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
-		sendPushNotification(token, title, body)
+		for _, token := range tokens {
+			sendPushNotification(token, title, body)
+		}
 
 		message := Message{
 			TankName: 	tank.Name,
@@ -376,7 +489,10 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 		fmt.Println("Sending HIGH notification")
 		title := fmt.Sprintf("%s is almost filled", tank.Name)
 		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
-		sendPushNotification(token, title, body)
+		
+		for _, token := range tokens {
+			sendPushNotification(token, title, body)
+		}
 
 		message := Message{
 			TankName: tank.Name,
@@ -396,10 +512,14 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 	
 	// Send alerts at extreme levels
 	if percentage >= float64(tankFull) && !criticalLevelNotified  {
-		fmt.Println("Sending 100% notification")
 		title := fmt.Sprintf("%s is already full", tank.Name)
-		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
-		sendPushNotification(token, title, body)
+		body := fmt.Sprintf("Water level for %s is at %d%%. Turn off the pump.", tank.Name, int(percentage))
+		
+		for _, token := range tokens {
+			sendPushNotification(token, title, body)
+		}
+
+		sendMessage(body, phone)
 
 		message := Message{
 			TankName: tank.Name,
@@ -413,10 +533,14 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 		criticalLevelNotified = true
 		return
 	} else if percentage <= float64(tankEmpty) && !criticalLevelNotified {
-		fmt.Println("Sending 20% notification")
 		title := fmt.Sprintf("%s is running dry", tank.Name)
-		body := fmt.Sprintf("Water level for %s is at %d%%", tank.Name, int(percentage))
-		sendPushNotification(token, title, body)
+		body := fmt.Sprintf("Water level for %s is at %d%%. Turn on the pump", tank.Name, int(percentage))
+		
+		for _, token := range tokens {
+			sendPushNotification(token, title, body)
+		}
+		
+		sendMessage(body, phone)
 
 		message := Message{
 			TankName: tank.Name,

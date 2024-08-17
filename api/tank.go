@@ -340,12 +340,24 @@ func getTrend(consumption []Consumption) Trend {
 	var duration float64
 
 	for i := 0; i <= len(consumption) - 1; i++ {
-		sumQuantity += consumption[i].Quantity	
+		// sumQuantity += consumption[i].Quantity	
 		duration += consumption[i].Duration
 
 		if consumption[i].Quantity < 0 {
 			amount += math.Abs(consumption[i].Quantity)
 		}	
+	}
+
+	var countValidForTrend int= 5
+
+	if len(consumption) > countValidForTrend {
+		consumption = consumption[len(consumption)-countValidForTrend:]
+	} else {
+		consumption = consumption
+	}
+
+	for i := 0; i <= len(consumption) - 1; i++ {
+		sumQuantity += consumption[i].Quantity	
 	}
 
 	trend.AmountConsumed = amount

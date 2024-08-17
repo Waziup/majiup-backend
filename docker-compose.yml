@@ -2,19 +2,13 @@ version: "3.8"
 
 services:
   majiup:
-    build:
-      context: .
-      x-bake:
-        platforms: "linux/arm64"
     image: waziupiot/majiup
     environment:
       - TEST_VAR=1
     ports:
-      - "8081:8081"
-    volumes:
-      - ./serve:/app/serve
-    restart: unless-stopped
-    command: ["./majiup"]
+      - "8082:8082"
+    restart: always
+    command: ["./main"]
     network_mode: "host"
 
 networks:

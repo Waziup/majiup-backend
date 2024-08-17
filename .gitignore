@@ -1,3 +1,4 @@
 majiup-waziapp/
 ./serve/*
 tests/*
+.env
