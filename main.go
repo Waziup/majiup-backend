@@ -560,15 +560,22 @@ func checkValForNotifcation (val float64, tankID string, sensorId string) {
 
 }
 
+// initialize checking for device when it goes offline ( a boolean variable for online, true by default)
+
 var messagePubHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Message) {
+
+	// start timeout for 10 minutes after this function executes
+	// reset timout before 10 minutes if a message is received (online status to true)
+	// if timeout resets before 10 minutes end do nothing
+	// if timeout executes upto 10 mins, create a print message offlinev (online status to false)
+	// when a message is received, toggle the online status to false
+	
 	regex := regexp.MustCompile(`^devices/([^/]+)/sensors/([^/]+)/value$`)
 	matches := regex.FindStringSubmatch(msg.Topic())
 
 	val := string(msg.Payload())
 
 	floatVal, err := strconv.ParseFloat(val, 64)
-
-
 
 	if err != nil {
 		fmt.Println("Error parsing float:", err)
