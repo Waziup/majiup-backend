@@ -348,7 +348,7 @@ func getTrend(consumption []Consumption) Trend {
 		}	
 	}
 
-	var countValidForTrend int= 5
+	var countValidForTrend int= 10
 
 	if len(consumption) > countValidForTrend {
 		consumption = consumption[len(consumption)-countValidForTrend:]

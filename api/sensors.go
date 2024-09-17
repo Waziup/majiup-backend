@@ -259,8 +259,6 @@ func GetWaterLevelHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	from := strings.ReplaceAll(r.URL.Query().Get("from"), " ", "+")
 	to := strings.ReplaceAll(r.URL.Query().Get("to"), " ", "+")
 
-	fmt.Println("FROM",from)
-	fmt.Println("TO",to)
 	q := u.Query()
 	q.Set("from", from)
 	q.Set("to", to)
