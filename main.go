@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -158,10 +159,9 @@ func sendMessage(message string, phone string) error {
 func sendPushNotification(expoPushToken string, title string, body string) error {
 	message := map[string]interface{}{
 		"to":    expoPushToken,
-		"sound": "default",
 		"title": title,
 		"body":  body,
-		"data":  map[string]string{"someData": "goes here"},
+		"sound":"default",
 	}
 
 	messageBytes, err := json.Marshal(message)
@@ -194,13 +194,68 @@ func sendPushNotification(expoPushToken string, title string, body string) error
 	}
 	defer resp.Body.Close()
 
+	// Read the response body
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Error reading response body: %v", err)
+		return err
+	}
+
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("Unexpected status code: %d", resp.StatusCode)
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		log.Printf("Response body: %s", string(respBody))  // Print the response body for debugging
+		return fmt.Errorf("unexpected status code: %d, response: %s", resp.StatusCode, string(respBody))
 	}
 
 	return nil
 }
+
+
+// func sendPushNotification(expoPushToken string, title string, body string) error {
+// 	message := map[string]interface{}{
+// 		"to":    expoPushToken,
+// 		"sound": "alarm.wav",
+// 		"title": title,
+// 		"body":  body,
+// 	}
+
+// 	messageBytes, err := json.Marshal(message)
+// 	if err != nil {
+// 		log.Printf("Error marshalling message: %v", err)
+// 		return err
+// 	}
+
+// 	req, err := http.NewRequest("POST", "https://exp.host/--/api/v2/push/send", bytes.NewBuffer(messageBytes))
+// 	if err != nil {
+// 		log.Printf("Error creating request: %v", err)
+// 		return err
+// 	}
+// 	req.Header.Set("Content-Type", "application/json")
+// 	req.Header.Set("Accept", "application/json")
+// 	req.Header.Set("Accept-Encoding", "gzip, deflate")
+
+// 	// Create a custom HTTP client with a transport that skips certificate verification
+// 	tr := &http.Transport{
+// 		TLSClientConfig: &tls.Config{
+// 			InsecureSkipVerify: true,
+// 		},
+// 	}
+
+// 	client := &http.Client{Transport: tr}
+// 	resp, err := client.Do(req)
+// 	if err != nil {
+// 		log.Printf("Error sending request: %v", err)
+// 		return err
+// 	}
+// 	defer resp.Body.Close()
+
+// 	if resp.StatusCode != http.StatusOK {
+// 		log.Printf("Unexpected status code: %d", resp.StatusCode)
+// 		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+// 	}
+
+// 	return nil
+// }
 
 func getTokens() []string { // Adjust the return type to []string
 	client := &http.Client{}
@@ -382,7 +437,7 @@ func updateTankMessages(tankID string, newMessage Message) {
 	}
 }
 
-func checkValForNotifcation (val float64, tankID string, sensorId string) {
+func checkValForNotifcation(val float64, tankID string, sensorId string) {
 
 	// Send a GET request to localhost/devices/tankID
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost/devices/%s", tankID), nil)
