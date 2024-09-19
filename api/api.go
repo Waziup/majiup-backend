@@ -15,7 +15,6 @@ func ApiServe(r *mux.Router) {
 	// Gateway profile
 	r.HandleFunc("/gateway-profile", handleCORS(getGatewayProfile)).Methods("GET")
 	r.HandleFunc("/gateway-profile", handleCORS(updateGatewayProfile)).Methods("POST")
-	r.HandleFunc("/wifi-status", handleCORS(getWifiStatus)).Methods("GET")	
 
 	r.HandleFunc("/send-notification", handleCORS(handleSendNotification)).Methods("GET")	
 
@@ -33,6 +32,10 @@ func ApiServe(r *mux.Router) {
 
 	// Endpoint to get tanks under majiup
 	r.HandleFunc("/tanks", handleCORS(TankHandler)).Methods("GET")
+
+	// Endpoint to get pumps under majiup
+	//: TODO
+	// r.HandleFunc("/pumps", handleCORS(TankHandler)).Methods("GET")
 
 	// Return devices using a specific ID
 	r.HandleFunc("/tanks/{tankID}", handleCORS(GetTankByIDHandler)).Methods("GET")
