@@ -1,4 +1,4 @@
-# Majiup backend 
+# Majiup backend
 
 ## Steps to run the Majiup
 
@@ -104,3 +104,43 @@ Sensor with ID of temperature_sensor_2 is water quality sensor sensor -> Assign 
 ### Step 4 - Set your tank on Majiup application
 
 Head over to majiup application and set the dimensions and capacity of your tank under settings.
+
+# API DOCUMENTATION
+
+- The base url for the API is `localhost:<PORT>/api/v1/`
+
+1. Retrieving and posting gateway information
+   This endpoint takes bothe POST and GET methods
+   - `/gateway-profile`
+2. Sending notification
+   - `/send-notification`
+3. Retrieving battery info
+   - `/tanks/{tankID}/battery-info`
+4. Retrieving analytics from a particular tank
+   - `/tanks/{tankID}/analytics`
+5. Listing all tanks connected to the gateway
+   - `/tanks`
+6. Retrieving a particular tank by ID
+   This endpoint takes Get, Delete,
+   - `/tanks/{tankID}`
+7. Retrieving all sensors for a specific tank
+   - `/tanks/{tankID}/tank-sensors`
+8. Retrieving all pumps connected to a specific tank of the given id
+   - `/tanks/{tankID}/pumps`
+9. Changing/updating tank name
+   - `/tanks/{tankID}/name`
+10. Obtaining meta infor for a given tank
+    This endpoint takes Post and Get method
+    - `/tanks/{tankID}/profile`
+11. Retrieving water levels from a tank
+    NB: Kind should be set to _WaterLevel_
+    - `/tanks/{tankID}/tank-sensors/waterlevel` -> Water Level Sensor information
+    - `/tanks/{tankID}/tank-sensors/waterlevel/value` -> Current value for the water level sensor
+    - `/tanks/{tankID}/tank-sensors/waterlevel/values` -> List of water level values
+12. Retrieving the pump state from a given device
+    NB: Kind should be set to _Motor_
+    - `/tanks/{tankID}/pumps/state` -> Shows the recent value
+    - `/tanks/{tankID}/pumps/states` -> Includes historical values
+13. Perform an actuation
+    - One can send a _1_ or a _0_
+    - `/tanks/{tankID}/pumps/state`
