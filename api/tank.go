@@ -32,6 +32,8 @@ type TankMeta struct {
 	Location            Location     `json:"location" bson:"location"`
 	Settings            Settings     `json:"settings" bson:"settings"`
 	Profile				Profile		 `json:"profile" bson:"profile"`
+	PumpID				string	 	 `json:"pumpID" bson:"pumpID"`
+	Assigned			bool 		 `json:"assigned" bson:"assigned"`
 }
 
 //Majiup sensor structure

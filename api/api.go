@@ -105,7 +105,7 @@ func ApiServe(r *mux.Router) {
 	// Endpoint to change water quality alerts
 	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality/alerts", handleCORS(ChangeWaterQualityAlerts)).Methods("POST")
 
-	/*---------------------------------PUMP ENDPOINTS-------------------------------------------*/
+	/*---------------------------------PUMP ENDPOINTS - v1.0 FOR PUMP ON SAME DEVICE AS TANK-------------------------------------------*/
 
 	// Endpoint to get the pump state of the selected tankID
 	r.HandleFunc("/tanks/{tankID}/pumps/state", handleCORS(TankStateHandler)).Methods("GET")
@@ -115,6 +115,18 @@ func ApiServe(r *mux.Router) {
 
 	// Endpoint to post pump state
 	r.HandleFunc("/tanks/{tankID}/pumps/state", handleCORS(TankStatePostHandler)).Methods("POST")
+
+
+	/*---------------------------------PUMP ENDPOINTS - v1.1 FOR PUMP ON DIFFERENT DEVICE AS TANK-------------------------------------------*/
+	// replace tankID with pump device's ID
+	r.HandleFunc("/pumps/{tankID}/pumps/state", handleCORS(TankStateHandler)).Methods("GET")
+
+	// Endpoint to get the pump states of the selected tankID, the length of the array will give the actuation
+	r.HandleFunc("/pumps/{tankID}/pumps/states", handleCORS(TankStateHistoryHandler)).Methods("GET")
+
+	// Endpoint to post pump state
+	r.HandleFunc("/pumps/{tankID}/pumps/state", handleCORS(TankStatePostHandler)).Methods("POST")
+
 
 	// Handle undefined routes
 	r.MethodNotAllowedHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
