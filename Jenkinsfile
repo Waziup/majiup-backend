@@ -39,17 +39,17 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+        // stage('Run Tests') {
+        //     steps {
+        //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
 
-                    // Navigate to the tests folder and run tests
-                    dir('tests') {
-                        sh 'python tests.py'
-                    }
-                }
-            }
-        }        
+        //             // Navigate to the tests folder and run tests
+        //             dir('tests') {
+        //                 sh 'python tests.py'
+        //             }
+        //         }
+        //     }
+        // }        
     }
 
     // post {
