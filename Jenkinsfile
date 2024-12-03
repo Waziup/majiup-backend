@@ -25,7 +25,7 @@ pipeline {
                 //    sh 'pnpm build'
                 //    sh 'cp -r dist/ serve/'
                 //}
-                sh 'sudo docker buildx build --tag=waziupiot/majiup . --load --no-cache -f Dockerfile-copy --progress plain'
+                sh 'sudo docker buildx build --tag=waziupiot/majiup . --load --no-cache --progress plain'
                 //sh 'sudo docker buildx build --tag="waziupiot/majiup" --load --progress plain .'
             }
         }
