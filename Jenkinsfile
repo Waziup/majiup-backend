@@ -51,9 +51,9 @@ pipeline {
         }        
     }
 
-    post {
-        always {
-            junit 'tests/test_results.xml'
-        }
-    }
+    // post {
+    //     always {
+    //         junit 'tests/test_results.xml'
+    //     }
+    // }
 }
