@@ -34,7 +34,8 @@ pipeline {
             steps {
                sh 'docker login -u waziupiot -p KCwaziupW'
                sh 'docker push waziupiot/majiup'
-               sh 'remote_start_waziapp.sh'
+               sh 'sudo chmod +x ./remote_start_waziapp.sh'
+               sh 'sudo ./remote_start_waziapp.sh'
             }
         }
 
