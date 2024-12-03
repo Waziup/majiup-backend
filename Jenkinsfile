@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                    // Clone the frontend repository
+                    // Clone the backend repository
                     sh 'git clone https://github.com/Waziup/majiup-backend.git'
                 }
             }
