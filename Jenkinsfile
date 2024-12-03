@@ -25,7 +25,7 @@ pipeline {
                 //    sh 'pnpm build'
                 //    sh 'cp -r dist/ serve/'
                 //}
-                sh 'sudo docker buildx bake --load --progress plain'
+                sh 'sudo docker buildx build --load --progress plain .'
             }
         }
 
