@@ -32,6 +32,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
+               sh 'docker login -u waziupiot -p KCwaziupW'
                sh 'docker push waziupiot/majiup'
                sh 'remote_start_waziapp.sh'
             }
