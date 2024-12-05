@@ -798,22 +798,13 @@ func main() {
 
 	// Start MQTT connection in a separate goroutine
 
-	topics := getMqttTopics()
+	// topics := getMqttTopics()
 
-	fmt.Println(topics)
+	// fmt.Println(topics)
 
 	// Start MQTT connection and maintain it in a separate goroutine
-	for _, topic := range topics {
-		go maintainMqttConnection("localhost", topic.TopicId, 1883)
-	}
-
 	// for _, topic := range topics {
-	// 	err := connectMqtt("localhost", topic.TopicId, 1883)
-	// 	// err := connectMqtt("wazigate.local", topic.TopicId, 1883)
-	// 	if err != nil {
-	// 		log.Printf("[ MQTT ] Failed to connect to MQTT: %v", err)
-	// 		// You can choose to proceed without MQTT or handle this error as per your application's requirements.
-	// 	}
+	// 	go maintainMqttConnection("localhost", topic.TopicId, 1883)
 	// }
 
 	// Start HTTP server
