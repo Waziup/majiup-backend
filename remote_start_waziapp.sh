@@ -3,4 +3,4 @@ TOKEN=`curl -X POST "http://wazigate-dashboard.staging.waziup.io/auth/token" -H 
 
 curl -X POST "http://wazigate-dashboard.staging.waziup.io/apps" -H "accept: */*" -H "Content-Type: application/json;charset=utf-8" -H "Authorization:Bearer $TOKEN" -d '"waziupiot/majiup:latest"'
 
-curl -X POST "http://wazigate-dashboard.staging.waziup.io/apps/waziup.majiup" -H "accept: */*" -H "Content-Type: application/json;charset=utf-8" -H "Authorization:Bearer $TOKEN" -d '{"action":"start"}'
+curl -X POST "http://wazigate-dashboard.staging.waziup.io/apps/waziupiot.majiup" -H "accept: */*" -H "Content-Type: application/json;charset=utf-8" -H "Authorization:Bearer $TOKEN" -d '{"action":"start"}'
