@@ -26,15 +26,14 @@ pipeline {
                 //    sh 'pnpm build'
                 //    sh 'cp -r dist/ serve/'
                 //}
-                sh 'sudo docker buildx build --tag=waziupiot/majiup:latest . --platform=linux/arm64 --load --no-cache --progress plain'
+                sh 'sudo docker buildx build --tag=waziup/majiup:latest . --platform=linux/arm64 --load --no-cache --progress plain'
                 //sh 'sudo docker buildx build --tag="waziupiot/majiup" --load --progress plain .'
             }
         }
 
         stage('Deploy') {
             steps {
-               sh 'docker login -u waziupiot -p KCwaziupW'
-               sh 'docker push waziupiot/majiup:latest'
+               sh 'docker push waziup/majiup:latest'
                sh 'sudo chmod +x ./remote_start_waziapp.sh'
                sh 'sudo ./remote_start_waziapp.sh'
             }
