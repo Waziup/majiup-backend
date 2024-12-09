@@ -7,24 +7,9 @@ pipeline {
     }
 
     stages {
-        // stage('Checkout') {
-        //     steps {
-        //         catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-        //             // Clone the frontend repository
-        //             sh 'git clone https://github.com/Waziup/majiup-waziapp.git'
-        //         }
-        //     }
-        // }
-
+ 
         stage ('Build') {
             steps {
-                // Navigate to the cloned frontend repository and build
-                // dir('majiup-waziapp') {
-                //     // Build the majiup-frontend
-                //     sh 'pnpm install'
-                //     sh 'pnpm build'
-                //     sh 'cp -r dist/ serve/'
-                // }
                 sh 'sudo docker buildx build --tag=waziup/majiup:latest . --platform=linux/arm64 --load --no-cache --progress plain'
             }
         }
