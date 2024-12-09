@@ -1,10 +1,13 @@
 # Stage 1: Build the executable
-FROM golang:1.17 AS builder
+FROM golang:1.16-alpine AS backend-build
+RUN apk add zip
+WORKDIR /app
 
-WORKDIR /go/src/app
-
+COPY go.mod go.sum ./
+RUN go mod download
 COPY . .
-
+RUN go build -o majiup .
+RUN zip index.zip docker-compose.yml package.json
 
 # Stage 2: Create the final runtime image
 FROM alpine:latest
@@ -13,11 +16,6 @@ WORKDIR /root/app
 COPY --from=backend-build /app/majiup ./
 COPY --from=backend-build /app/index.zip /
 
-WORKDIR /root/
-COPY --from=builder /go/src/app/main .
+EXPOSE 8081
 
-# Expose the port on which the Go application will run (if needed)
-EXPOSE 8082
-
-# Command to run the executable
-CMD ["./main"]
+CMD ["./majiup"]
