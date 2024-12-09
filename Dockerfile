@@ -5,10 +5,13 @@ WORKDIR /go/src/app
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
 
-# Stage 2: Create a minimal image to run the executable
-FROM scratch
+# Stage 2: Create the final runtime image
+FROM alpine:latest
+WORKDIR /root/app
+
+COPY --from=backend-build /app/majiup ./
+COPY --from=backend-build /app/index.zip /
 
 WORKDIR /root/
 COPY --from=builder /go/src/app/main .
