@@ -1,13 +1,14 @@
-# Stage 1: Build the executable
+# Stage 1: Compile go app
 FROM golang:1.16-alpine AS backend-build
-RUN apk add zip
+RUN apk add zip 
 WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -a -installsuffix cgo -o majiup .
+RUN go build -o majiup .
 RUN zip index.zip docker-compose.yml package.json
+
 
 # Stage 2: Create the final runtime image
 FROM alpine:latest
