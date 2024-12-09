@@ -6,7 +6,7 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o majiup .
+RUN go build -a -installsuffix cgo -o majiup .
 RUN zip index.zip docker-compose.yml package.json
 
 # Stage 2: Create the final runtime image
