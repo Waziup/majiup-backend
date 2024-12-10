@@ -1,5 +1,5 @@
 # Stage 1: Compile go app
-FROM golang:1.16-alpine AS backend-build
+FROM golang:1.18-alpine AS backend-build
 RUN apk add zip 
 WORKDIR /app
 
