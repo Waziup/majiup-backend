@@ -798,14 +798,14 @@ func main() {
 
 	// Start MQTT connection in a separate goroutine
 
-	// topics := getMqttTopics()
+	topics := getMqttTopics()
 
-	// fmt.Println(topics)
+	fmt.Println(topics)
 
 	// Start MQTT connection and maintain it in a separate goroutine
-	// for _, topic := range topics {
-	// 	go maintainMqttConnection("localhost", topic.TopicId, 1883)
-	// }
+	for _, topic := range topics {
+		go maintainMqttConnection("localhost", topic.TopicId, 1883)
+	}
 
 	// Start HTTP server
 	err := http.ListenAndServe(":8082", mainRouter)
