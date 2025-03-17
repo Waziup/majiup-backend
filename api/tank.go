@@ -20,7 +20,7 @@ type Tank struct {
 	ID       string       `json:"id" bson:"_id"`
 	Name     string       `json:"name" bson:"name"`
 	Sensors  []SensorData `json:"sensors"`
-	Pumps    []PumpData   `json:"actuators"`
+	Actuators    []ActuatorData   `json:"actuators"`
 	Meta     TankMeta     `json:"meta" bson:"meta"`
 	Modified time.Time    `json:"modified" bson:"modified"`
 	Created  time.Time    `json:"created" bson:"created"`	
@@ -32,7 +32,7 @@ type TankMeta struct {
 	Location            Location     `json:"location" bson:"location"`
 	Settings            Settings     `json:"settings" bson:"settings"`
 	Profile				Profile		 `json:"profile" bson:"profile"`
-	PumpID				string	 	 `json:"pumpID" bson:"pumpID"`
+	ActuatorID			string	 	 `json:"actuatorID" bson:"actuatorID"`
 	Assigned			bool 		 `json:"assigned" bson:"assigned"`
 }
 
@@ -48,14 +48,14 @@ type SensorData struct {
 }
 
 //Majiup actuator structure
-type PumpData struct {
+type ActuatorData struct {
 	ID   string `json:"id" bson:"id"`
 	Name string `json:"name" bson:"name"`
 
 	Modified time.Time `json:"modified" bson:"modified"`
 	Created  time.Time `json:"created" bson:"created"`
 
-	PumpMeta PumpMeta `json:"meta" bson:"meta"`
+	ActuatorMeta ActuatorMeta `json:"meta" bson:"meta"`
 
 	Time  *time.Time  `json:"time" bson:"time"`
 	Value interface{} `json:"value" bson:"value"`
@@ -106,7 +106,7 @@ type SensorMeta struct {
 	CriticalMax float64 `json:"critical_max" bson:"critical_max"`
 }
 
-type PumpMeta struct {
+type ActuatorMeta struct {
 	Kind string `json:"kind" bson:"kind"`
 }
 
@@ -730,7 +730,7 @@ func TankHandler(w http.ResponseWriter, r *http.Request) {
 			ID:       tank.ID,
 			Name:     tank.Name,
 			Sensors:  tank.Sensors,
-			Pumps:    tank.Pumps,
+			Actuators:    tank.Actuators,
 			Meta:     tank.Meta,
 			Modified: tank.Modified,
 			Created:  tank.Created,

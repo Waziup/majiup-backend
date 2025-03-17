@@ -41,19 +41,19 @@ type SensorData struct {
 	Value    interface{} `json:"value" bson:"value"`
 }
 
-type PumpMeta struct {
+type ActuatorMeta struct {
 	Kind string `json:"kind" bson:"kind"`
 }
 
 //Majiup actuator structure
-type PumpData struct {
+type ActuatorData struct {
 	ID   string `json:"id" bson:"id"`
 	Name string `json:"name" bson:"name"`
 
 	Modified time.Time `json:"modified" bson:"modified"`
 	Created  time.Time `json:"created" bson:"created"`
 
-	PumpMeta PumpMeta `json:"meta" bson:"meta"`
+	ActuatorMeta ActuatorMeta `json:"meta" bson:"meta"`
 
 	Time  *time.Time  `json:"time" bson:"time"`
 	Value interface{} `json:"value" bson:"value"`
@@ -86,7 +86,7 @@ type Tank struct {
 	ID       string       `json:"id" bson:"_id"`
 	Name     string       `json:"name" bson:"name"`
 	Sensors  []SensorData `json:"sensors"`
-	Pumps    []PumpData   `json:"actuators"`
+	Actuators    []ActuatorData   `json:"actuators"`
 	Modified time.Time    `json:"modified" bson:"modified"`
 	Created  time.Time    `json:"created" bson:"created"`
 	Meta     TankMeta     `json:"meta" bson:"meta"`
@@ -568,7 +568,7 @@ func checkValForNotifcation(val float64, tankID string, sensorId string) {
 	// Send alerts at extreme levels
 	if percentage >= float64(tankFull) && !criticalLevelNotified  {
 		title := fmt.Sprintf("%s is already full", tank.Name)
-		body := fmt.Sprintf("Water level for %s is at %d%%. Turn off the pump.", tank.Name, int(percentage))
+		body := fmt.Sprintf("Water level for %s is at %d%%. Turn off the actuator.", tank.Name, int(percentage))
 		
 		for _, token := range tokens {
 			sendPushNotification(token, title, body)
@@ -589,7 +589,7 @@ func checkValForNotifcation(val float64, tankID string, sensorId string) {
 		return
 	} else if percentage <= float64(tankEmpty) && !criticalLevelNotified {
 		title := fmt.Sprintf("%s is running dry", tank.Name)
-		body := fmt.Sprintf("Water level for %s is at %d%%. Turn on the pump", tank.Name, int(percentage))
+		body := fmt.Sprintf("Water level for %s is at %d%%. Turn on the actuator", tank.Name, int(percentage))
 		
 		for _, token := range tokens {
 			sendPushNotification(token, title, body)

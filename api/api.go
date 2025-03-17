@@ -33,9 +33,9 @@ func ApiServe(r *mux.Router) {
 	// Endpoint to get tanks under majiup
 	r.HandleFunc("/tanks", handleCORS(TankHandler)).Methods("GET")
 
-	// Endpoint to get pumps under majiup
+	// Endpoint to get actuators under majiup
 	//: TODO
-	// r.HandleFunc("/pumps", handleCORS(TankHandler)).Methods("GET")
+	// r.HandleFunc("/actuators", handleCORS(TankHandler)).Methods("GET")
 
 	// Return devices using a specific ID
 	r.HandleFunc("/tanks/{tankID}", handleCORS(GetTankByIDHandler)).Methods("GET")
@@ -43,8 +43,8 @@ func ApiServe(r *mux.Router) {
 	// Endpoint to get all sensors for a specific tank
 	r.HandleFunc("/tanks/{tankID}/tank-sensors", handleCORS(TankSensorHandler)).Methods("GET")
 
-	// Endpoint to get the pumps available in the tank
-	r.HandleFunc("/tanks/{tankID}/pumps", handleCORS(TankPumpHandler)).Methods("GET")
+	// Endpoint to get the actuators available in the tank
+	r.HandleFunc("/tanks/{tankID}/actuators", handleCORS(TankActuatorHandler)).Methods("GET")
 
 	// Endpoint to get sensor history
 	r.HandleFunc("/tanks/{tankID}/tank-info", handleCORS(GetSensorHistoryHandler)).Methods("GET")
@@ -105,27 +105,27 @@ func ApiServe(r *mux.Router) {
 	// Endpoint to change water quality alerts
 	r.HandleFunc("/tanks/{tankID}/tank-sensors/water-quality/alerts", handleCORS(ChangeWaterQualityAlerts)).Methods("POST")
 
-	/*---------------------------------PUMP ENDPOINTS - v1.0 FOR PUMP ON SAME DEVICE AS TANK-------------------------------------------*/
+	/*---------------------------------ACTUATOR ENDPOINTS - v1.0 FOR ACTUATOR ON SAME DEVICE AS TANK-------------------------------------------*/
 
-	// Endpoint to get the pump state of the selected tankID
-	r.HandleFunc("/tanks/{tankID}/pumps/state", handleCORS(TankStateHandler)).Methods("GET")
+	// Endpoint to get the actuator state of the selected tankID
+	r.HandleFunc("/tanks/{tankID}/actuators/state", handleCORS(TankStateHandler)).Methods("GET")
 
-	// Endpoint to get the pump states of the selected tankID, the length of the array will give the actuation
-	r.HandleFunc("/tanks/{tankID}/pumps/states", handleCORS(TankStateHistoryHandler)).Methods("GET")
+	// Endpoint to get the actuator states of the selected tankID, the length of the array will give the actuation
+	r.HandleFunc("/tanks/{tankID}/actuators/states", handleCORS(TankStateHistoryHandler)).Methods("GET")
 
-	// Endpoint to post pump state
-	r.HandleFunc("/tanks/{tankID}/pumps/state", handleCORS(TankStatePostHandler)).Methods("POST")
+	// Endpoint to post actuator state
+	r.HandleFunc("/tanks/{tankID}/actuators/state", handleCORS(TankStatePostHandler)).Methods("POST")
 
 
-	/*---------------------------------PUMP ENDPOINTS - v1.1 FOR PUMP ON DIFFERENT DEVICE AS TANK-------------------------------------------*/
-	// replace tankID with pump device's ID
-	r.HandleFunc("/pumps/{tankID}/pumps/state", handleCORS(TankStateHandler)).Methods("GET")
+	/*---------------------------------ACTUATOR ENDPOINTS - v1.1 FOR ACTUATOR ON DIFFERENT DEVICE AS TANK-------------------------------------------*/
+	// replace tankID with actuator device's ID
+	r.HandleFunc("/actuators/{tankID}/actuators/state", handleCORS(TankStateHandler)).Methods("GET")
 
-	// Endpoint to get the pump states of the selected tankID, the length of the array will give the actuation
-	r.HandleFunc("/pumps/{tankID}/pumps/states", handleCORS(TankStateHistoryHandler)).Methods("GET")
+	// Endpoint to get the actuator states of the selected tankID, the length of the array will give the actuation
+	r.HandleFunc("/actuators/{tankID}/actuators/states", handleCORS(TankStateHistoryHandler)).Methods("GET")
 
-	// Endpoint to post pump state
-	r.HandleFunc("/pumps/{tankID}/pumps/state", handleCORS(TankStatePostHandler)).Methods("POST")
+	// Endpoint to post actuator state
+	r.HandleFunc("/actuators/{tankID}/actuators/state", handleCORS(TankStatePostHandler)).Methods("POST")
 
 
 	// Handle undefined routes

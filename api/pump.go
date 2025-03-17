@@ -12,8 +12,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// WaterQualitySensorHandler handles requests to retrieve tanks in a specific tank
-func TankPumpHandler(w http.ResponseWriter, r *http.Request) {
+// handles requests to retrieve actuators in a specific tank
+func TankActuatorHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
 	tankID := vars["tankID"]
@@ -59,18 +59,18 @@ func TankPumpHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Filter the pumps based on the meta field Kind = "Motor"
-	var motorActuators []PumpData
-	for _, actuator := range targetTank.Pumps {
-		if actuator.PumpMeta.Kind == "Motor" {
+	// Filter the actuators based on the meta field Kind = "Motor"
+	var motorActuators []ActuatorData
+	for _, actuator := range targetTank.Actuators {
+		if actuator.ActuatorMeta.Kind == "Motor" {
 			motorActuators = append(motorActuators, actuator)
 		}
 	}
 
-	// Marshal the motor pumps into JSON
+	// Marshal the motor actuators into JSON
 	response, err := json.Marshal(motorActuators)
 	if err != nil {
-		fmt.Println("Error marshaling motor pumps:", err)
+		fmt.Println("Error marshaling motor actuators:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -78,7 +78,7 @@ func TankPumpHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
-	log.Printf("[%s] Retrieved tank pumps: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+	log.Printf("[%s] Retrieved tank actuators: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
@@ -133,29 +133,29 @@ func TankStateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find the state of the actuator in the target tank
-	var pumpState interface{}
-	for _, actuator := range targetTank.Pumps {
-		if actuator.PumpMeta.Kind == "Motor" { // Assuming the actuator name is "pump"
-			pumpState = actuator.Value
+	var actuatorState interface{}
+	for _, actuator := range targetTank.Actuators {
+		if actuator.ActuatorMeta.Kind == "Motor" { // Assuming the actuator name is "actuator"
+			actuatorState = actuator.Value
 			break
 		}
 	}
 
-	if pumpState == nil {
+	if actuatorState == nil {
 		fmt.Println("Actuator state not found")
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
 	// Marshal the actuator state into JSON
-	response, err := json.Marshal(pumpState)
+	response, err := json.Marshal(actuatorState)
 	if err != nil {
 		fmt.Println("Error marshaling actuator state:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("[%s] Fetched pump state: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+	log.Printf("[%s] Fetched actuator state: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
@@ -174,7 +174,7 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Send a GET request to localhost/devices/tankID/sensors
 	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators", tankID))
 	if err != nil {
-		fmt.Println("Error retrieving pumps:", err)
+		fmt.Println("Error retrieving actuators:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -188,32 +188,32 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Unmarshal the actuator data into a slice of PumpData
-	var pumps []PumpData
-	err = json.Unmarshal(actuatorBody, &pumps)
+	// Unmarshal the actuator data into a slice of ActuatorData
+	var actuators []ActuatorData
+	err = json.Unmarshal(actuatorBody, &actuators)
 	if err != nil {
-		fmt.Println("Error unmarshaling pumps:", err)
+		fmt.Println("Error unmarshaling actuators:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// Find the actuator with the specified kind (Motor)
-	var targetPump PumpData
-	for _, actuator := range pumps {
-		if actuator.PumpMeta.Kind == "Motor" {
-			targetPump = actuator
+	var targetActuator ActuatorData
+	for _, actuator := range actuators {
+		if actuator.ActuatorMeta.Kind == "Motor" {
+			targetActuator = actuator
 			break
 		}
 	}
 
-	if targetPump.ID == "" {
+	if targetActuator.ID == "" {
 		fmt.Println("Actuator not found")
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	// Send a GET request to localhost/devices/tankID/pumps/actuatorID/values
-	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators/%s/values", tankID, targetPump.ID))
+	// Send a GET request to localhost/devices/tankID/actuators/actuatorID/values
+	resp, err = http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators/%s/values", tankID, targetActuator.ID))
 	if err != nil {
 		fmt.Println("Error retrieving actuator values:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -244,7 +244,7 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
 		v := value.Value
 
 		categorizedValue := map[string]interface{}{
-			"pumpState": v,
+			"actuatorState": v,
 			"timestamp": value.Timestamp,
 		}
 
@@ -263,7 +263,7 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
-	log.Printf("[%s] Fetched pump state history: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+	log.Printf("[%s] Fetched actuator state history: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
@@ -293,25 +293,25 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Unmarshal the actuator data into a slice of PumpData
-	var pumps []PumpData
-	err = json.Unmarshal(actuatorBody, &pumps)
+	// Unmarshal the actuator data into a slice of ActuatorData
+	var actuators []ActuatorData
+	err = json.Unmarshal(actuatorBody, &actuators)
 	if err != nil {
-		fmt.Println("Error unmarshaling pumps:", err)
+		fmt.Println("Error unmarshaling actuators:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	// Find the actuator with the specified kind (Motor)
-	var targetPump PumpData
-	for _, actuator := range pumps {
-		if actuator.PumpMeta.Kind == "Motor" {
-			targetPump = actuator
+	var targetActuator ActuatorData
+	for _, actuator := range actuators {
+		if actuator.ActuatorMeta.Kind == "Motor" {
+			targetActuator = actuator
 			break
 		}
 	}
 
-	if targetPump.ID == "" {
+	if targetActuator.ID == "" {
 		fmt.Println("Actuator not found")
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -334,11 +334,11 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update the value of the target pump actuator
-	targetPump.Value = request["value"]
+	// Update the value of the target actuator actuator
+	targetActuator.Value = request["value"]
 
 	// Marshal the updated actuator state into JSON
-	response, err := json.Marshal(targetPump.Value)
+	response, err := json.Marshal(targetActuator.Value)
 	if err != nil {
 		fmt.Println("Error marshaling actuator state:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -348,13 +348,13 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Set the Content-Type header to application/json
 	w.Header().Set("Content-Type", "application/json")
 
-	log.Printf("[%s] Pump status changed: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+	log.Printf("[%s] Actuator status changed: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
 	// Write the JSON response to the response writer
 	w.Write(response)
 
 	// Perform the POST request to update the state value of the actuator
-	actuatorURL := fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", tankID, targetPump.ID)
+	actuatorURL := fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", tankID, targetActuator.ID)
 	_, err = http.Post(actuatorURL, "applicationl/json", bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Println("Error updating actuator state:", err)
