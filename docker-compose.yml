@@ -8,7 +8,7 @@ services:
         ports:
             - "8082:8082"
         restart: always
-        command: ["./main"]
+        command: ["./majiup"]
         network_mode: "host"
 
 networks:
