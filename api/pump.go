@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -269,100 +270,106 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(response)
 }
 
-// TankStatePostHandler handles requests to update the state value of an actuator in a specific tank
 func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 
-	vars := mux.Vars(r)
-	tankID := vars["tankID"]
+    vars := mux.Vars(r)
+    tankID := vars["tankID"]
 
-	// Send a GET request to localhost/devices/tankID/actuators
-	resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators", tankID))
-	if err != nil {
-		fmt.Println("Error retrieving actuators:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	defer resp.Body.Close()
+    // Send a GET request to localhost/devices/tankID/actuators
+    resp, err := http.Get(fmt.Sprintf("http://localhost/devices/%s/actuators", tankID))
+    if err != nil {
+        fmt.Println("Error retrieving actuators:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
+    defer resp.Body.Close()
 
-	// Read the response body
-	actuatorBody, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println("Error reading actuator response body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    // Read the response body
+    actuatorBody, err := ioutil.ReadAll(resp.Body)
+    if err != nil {
+        fmt.Println("Error reading actuator response body:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 
-	// Unmarshal the actuator data into a slice of ActuatorData
-	var actuators []ActuatorData
-	err = json.Unmarshal(actuatorBody, &actuators)
-	if err != nil {
-		fmt.Println("Error unmarshaling actuators:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    // Unmarshal the actuator data into a slice of ActuatorData
+    var actuators []ActuatorData
+    err = json.Unmarshal(actuatorBody, &actuators)
+    if err != nil {
+        fmt.Println("Error unmarshaling actuators:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 
-	// Find the actuator with the specified kind (Motor)
-	var targetActuator ActuatorData
-	for _, actuator := range actuators {
-		if actuator.ActuatorMeta.Kind == "Motor" {
-			targetActuator = actuator
-			break
-		}
-	}
+    // Find the actuator with the specified kind (Motor)
+    var targetActuator ActuatorData
+    for _, actuator := range actuators {
+        if actuator.ActuatorMeta.Kind == "Motor" {
+            targetActuator = actuator
+            break
+        }
+    }
 
-	if targetActuator.ID == "" {
-		fmt.Println("Actuator not found")
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+    if targetActuator.ID == "" {
+        fmt.Println("Actuator not found")
+        w.WriteHeader(http.StatusNotFound)
+        return
+    }
 
-	// Read the request body
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		fmt.Println("Error reading request body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    // Read the raw request body (just 0 or 1)
+    body, err := ioutil.ReadAll(r.Body)
+    if err != nil {
+        fmt.Println("Error reading request body:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 
-	// The request body should contain just the value (1 or 0), not a key like "state"
-	var value interface{}
-	err = json.Unmarshal(body, &value)
-	if err != nil {
-		fmt.Println("Error unmarshaling request body:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    // Convert the raw body (which is a string) to an integer (0 or 1)
+    var value int
+    if len(body) > 0 {
+        // Convert body to string and then parse it as an integer
+        value, err = strconv.Atoi(string(body))
+        if err != nil {
+            fmt.Println("Error converting body to integer:", err)
+            w.WriteHeader(http.StatusBadRequest)
+            return
+        }
+    } else {
+        fmt.Println("Request body is empty")
+        w.WriteHeader(http.StatusBadRequest)
+        return
+    }
 
-	// Update the value of the target actuator actuator
-	targetActuator.Value = value
+    // Update the value of the target actuator actuator
+    targetActuator.Value = value
 
-	// Marshal the updated actuator state into JSON (for the response)
-	response, err := json.Marshal(targetActuator.Value)
-	if err != nil {
-		fmt.Println("Error marshaling actuator state:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    // Marshal the updated actuator state into JSON (for the response)
+    response, err := json.Marshal(targetActuator.Value)
+    if err != nil {
+        fmt.Println("Error marshaling actuator state:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 
-	// Set the Content-Type header to application/json
-	w.Header().Set("Content-Type", "application/json")
+    // Set the Content-Type header to application/json
+    w.Header().Set("Content-Type", "application/json")
 
-	log.Printf("[%s] Actuator status changed: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
+    log.Printf("[%s] Actuator status changed: %s %s", time.Now().Format(time.RFC3339), r.Method, r.URL.Path)
 
-	// Write the JSON response to the response writer
-	w.Write(response)
+    // Write the JSON response to the response writer
+    w.Write(response)
 
-	// Perform the POST request to update the state value of the actuator
-	actuatorURL := fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", tankID, targetActuator.ID)
+    // Perform the POST request to update the state value of the actuator
+    actuatorURL := fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", tankID, targetActuator.ID)
 
-	// Send just the raw value (1 or 0) in the body of the request
-	body = []byte(fmt.Sprintf("%v", value))  // This sends just the value (1 or 0)
+    // Send just the raw value (0 or 1) in the body of the request
+    body = []byte(fmt.Sprintf("%v", value)) // This sends just the value (0 or 1)
 
-	_, err = http.Post(actuatorURL, "application/json", bytes.NewBuffer(body))
-	if err != nil {
-		fmt.Println("Error updating actuator state:", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+    _, err = http.Post(actuatorURL, "application/json", bytes.NewBuffer(body))
+    if err != nil {
+        fmt.Println("Error updating actuator state:", err)
+        w.WriteHeader(http.StatusInternalServerError)
+        return
+    }
 }
 
