@@ -273,7 +273,6 @@ func TankStateHistoryHandler(w http.ResponseWriter, r *http.Request) {
 func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
-
 	tankID := vars["tankID"]
 
 	// Send a GET request to localhost/devices/tankID/actuators
@@ -325,7 +324,7 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The request body should contain just the value, not a key like "state"
+	// The request body should contain just the value (1 or 0), not a key like "state"
 	var value interface{}
 	err = json.Unmarshal(body, &value)
 	if err != nil {
@@ -337,7 +336,7 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 	// Update the value of the target actuator actuator
 	targetActuator.Value = value
 
-	// Marshal the updated actuator state into JSON
+	// Marshal the updated actuator state into JSON (for the response)
 	response, err := json.Marshal(targetActuator.Value)
 	if err != nil {
 		fmt.Println("Error marshaling actuator state:", err)
@@ -355,6 +354,10 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Perform the POST request to update the state value of the actuator
 	actuatorURL := fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", tankID, targetActuator.ID)
+
+	// Send just the raw value (1 or 0) in the body of the request
+	body = []byte(fmt.Sprintf("%v", value))  // This sends just the value (1 or 0)
+
 	_, err = http.Post(actuatorURL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Println("Error updating actuator state:", err)
