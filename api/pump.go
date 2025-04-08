@@ -325,9 +325,9 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Unmarshal the JSON data into a map
-	var request map[string]interface{}
-	err = json.Unmarshal(body, &request)
+	// The request body should contain just the value, not a key like "state"
+	var value interface{}
+	err = json.Unmarshal(body, &value)
 	if err != nil {
 		fmt.Println("Error unmarshaling request body:", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -335,7 +335,7 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Update the value of the target actuator actuator
-	targetActuator.Value = request["value"]
+	targetActuator.Value = value
 
 	// Marshal the updated actuator state into JSON
 	response, err := json.Marshal(targetActuator.Value)
@@ -355,10 +355,11 @@ func TankStatePostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Perform the POST request to update the state value of the actuator
 	actuatorURL := fmt.Sprintf("http://localhost/devices/%s/actuators/%s/value", tankID, targetActuator.ID)
-	_, err = http.Post(actuatorURL, "applicationl/json", bytes.NewBuffer(body))
+	_, err = http.Post(actuatorURL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Println("Error updating actuator state:", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
+

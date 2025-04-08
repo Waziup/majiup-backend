@@ -589,7 +589,7 @@ func checkValForNotifcation(val float64, tankID string, sensorId string) {
 		return
 	} else if percentage <= float64(tankEmpty) && !criticalLevelNotified {
 		title := fmt.Sprintf("%s is running dry", tank.Name)
-		body := fmt.Sprintf("Water level for %s is at %d%%. Turn on the actuator", tank.Name, int(percentage))
+		body := fmt.Sprintf("Water level for %s is at %d%%. Turn on the actuators", tank.Name, int(percentage))
 		
 		for _, token := range tokens {
 			sendPushNotification(token, title, body)

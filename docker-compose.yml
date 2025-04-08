@@ -1,17 +1,17 @@
 version: "3.8"
 
 services:
-  majiup:
-    image: waziupiot/majiup
-    environment:
-      - TEST_VAR=1
-    ports:
-      - "8082:8082"
-    restart: always
-    command: ["./main"]
-    network_mode: "host"
+    majiup:
+        image: waziupiot/majiup:latest
+        environment:
+            - TEST_VAR=1
+        ports:
+            - "8082:8082"
+        restart: always
+        command: ["./main"]
+        network_mode: "host"
 
 networks:
-  default:
-    external:
-      name: wazigate
+    default:
+        external:
+            name: wazigate
